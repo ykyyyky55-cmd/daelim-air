@@ -752,6 +752,10 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const sbRes = await window.SupabaseService.fetchSupabaseRecord(targetDate);
         if (sbRes.success && sbRes.data) {
+          // 브라우저 로컬 스토리지 캐시 동기화
+          try {
+            localStorage.setItem('daelim_air_record_' + targetDate, JSON.stringify(sbRes.data));
+          } catch (e) {}
           await applyRecordToUI(sbRes.data, false, targetDate);
           return;
         }
@@ -766,6 +770,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (res.ok) {
         const resJson = await res.json();
         if (resJson.success && resJson.data) {
+          // 브라우저 로컬 스토리지 캐시 동기화
+          try {
+            localStorage.setItem('daelim_air_record_' + targetDate, JSON.stringify(resJson.data));
+          } catch (e) {}
           await applyRecordToUI(resJson.data, !!resJson.isNew, targetDate);
           return;
         }
@@ -1665,48 +1673,55 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // 모든 기록 불러오기 (Supabase 우선, 로컬/서버 병합)
+  // 모든 가용 운영기록 불러오기 (서버 전체 API -> Supabase 클라우드 -> 로컬스토리지 병합 및 자동 캐시)
   async function fetchAllAvailableRecords() {
     const recordsMap = new Map();
 
-    // 1. Supabase에서 전체 조회
-    if (window.SupabaseService && window.SupabaseService.isSupabaseConfigured()) {
-      const sb = window.SupabaseService.getSupabase();
-      if (sb) {
-        try {
-          const { data, error } = await sb
-            .from('air_operation_records')
-            .select('*')
-            .order('record_date', { ascending: true });
-          if (!error && data) {
-            data.forEach(item => {
-              recordsMap.set(item.record_date, {
-                date: item.record_date,
-                status: item.status || 'NORMAL',
-                ...item.record_data
-              });
-            });
-          }
-        } catch (e) {
-          console.warn('[Supabase] 전체 목록 로드 예외:', e);
-        }
-      }
-    }
-
-    // 2. 로컬 백엔드 서버에서 전체 조회
+    // 1. 로컬 백엔드 서버에서 전체 운영기록 일괄 조회 (/api/records-all)
     try {
-      const res = await fetch('/api/records-list');
+      const res = await fetch('/api/records-all');
       if (res.ok) {
         const resJson = await res.json();
-        if (resJson.success && resJson.data) {
-          resJson.data.forEach(item => {
-            if (!recordsMap.has(item.date)) {
-              recordsMap.set(item.date, item);
-            }
+        if (resJson.success && resJson.records) {
+          Object.entries(resJson.records).forEach(([dateStr, record]) => {
+            recordsMap.set(dateStr, record);
+            // 브라우저 로컬 스토리지에도 자동 동기화 캐시
+            try {
+              localStorage.setItem('daelim_air_record_' + dateStr, JSON.stringify(record));
+            } catch (e) {}
           });
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn('[Server] /api/records-all 호출 예외 (정적 호스팅 환경일 수 있음):', e);
+    }
+
+    // 2. Supabase 클라우드에서 전체 조회
+    if (window.SupabaseService && window.SupabaseService.isSupabaseConfigured()) {
+      try {
+        const supaRecords = await window.SupabaseService.fetchSupabaseRecords();
+        if (supaRecords && Array.isArray(supaRecords)) {
+          supaRecords.forEach(item => {
+            const dateStr = item.record_date;
+            const fullRecord = {
+              date: dateStr,
+              status: item.status || 'NORMAL',
+              ...item.record_data
+            };
+            if (!recordsMap.has(dateStr)) {
+              recordsMap.set(dateStr, fullRecord);
+            }
+            try {
+              if (!localStorage.getItem('daelim_air_record_' + dateStr)) {
+                localStorage.setItem('daelim_air_record_' + dateStr, JSON.stringify(fullRecord));
+              }
+            } catch (e) {}
+          });
+        }
+      } catch (e) {
+        console.warn('[Supabase] 전체 목록 로드 예외:', e);
+      }
+    }
 
     // 3. 브라우저 localStorage 캐시 병합
     try {
@@ -1716,13 +1731,58 @@ document.addEventListener('DOMContentLoaded', () => {
           const dateStr = key.replace('daelim_air_record_', '');
           if (!recordsMap.has(dateStr)) {
             const parsed = JSON.parse(localStorage.getItem(key));
-            recordsMap.set(dateStr, parsed);
+            if (parsed) {
+              recordsMap.set(dateStr, parsed);
+            }
           }
         }
       }
     } catch (e) {}
 
     return Array.from(recordsMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  // 단일 일자 운영기록 안전 로드 헬퍼 (로컬스토리지 -> 로컬서버 -> Supabase 순)
+  async function fetchSingleRecord(dateStr) {
+    if (!dateStr) return null;
+
+    // 1. 브라우저 localStorage 캐시 확인
+    try {
+      const localData = localStorage.getItem('daelim_air_record_' + dateStr);
+      if (localData) {
+        const parsed = JSON.parse(localData);
+        if (parsed && (parsed.date || parsed.exhaustList)) return parsed;
+      }
+    } catch (e) {}
+
+    // 2. 로컬 백엔드 서버 확인
+    try {
+      const res = await fetch(`/api/records/${dateStr}`);
+      if (res.ok) {
+        const resJson = await res.json();
+        if (resJson.success && resJson.data) {
+          try {
+            localStorage.setItem('daelim_air_record_' + dateStr, JSON.stringify(resJson.data));
+          } catch (e) {}
+          return resJson.data;
+        }
+      }
+    } catch (e) {}
+
+    // 3. Supabase 클라우드 확인
+    if (window.SupabaseService && window.SupabaseService.isSupabaseConfigured()) {
+      try {
+        const sbRes = await window.SupabaseService.fetchSupabaseRecord(dateStr);
+        if (sbRes && sbRes.success && sbRes.data) {
+          try {
+            localStorage.setItem('daelim_air_record_' + dateStr, JSON.stringify(sbRes.data));
+          } catch (e) {}
+          return sbRes.data;
+        }
+      } catch (e) {}
+    }
+
+    return null;
   }
 
   // 검색 결과 테이블 렌더링
@@ -2047,7 +2107,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <span style="margin-left: 15px;">온도 : ${temp}</span>
           </div>
         </div>
-        <div class="section-title"><span>1. 배출구별 주요 배출시설 및 방지시설 가동(조업)시간</span></div>
+        <div class="section-title" style="margin: 8px 0 4px 0;"><span>1. 배출구별 주요 배출시설 및 방지시설 가동(조업)시간</span></div>
         <table class="sheet-table">
           <thead>
             <tr>
@@ -2059,7 +2119,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </thead>
           <tbody>${exhaustRowsHtml}</tbody>
         </table>
-        <div class="section-title" style="margin-top: 15px;"><span>2. 방지시설 운전사항 및 보수사항</span></div>
+        <div class="section-title" style="margin-top: 8px; margin-bottom: 4px;"><span>2. 방지시설 운전사항 및 보수사항</span></div>
         <table class="sheet-table">
           <thead>
             <tr>
@@ -2084,8 +2144,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const backHtml = `
       <article class="${pageClass}">
         <div class="sheet-badge">양식 2 : 자가측정 및 원료/연료 운영기록부 (뒷면) - ${record.date}</div>
-        <div class="section-title"><span>3. 자가측정사항</span></div>
-        <table class="sheet-table" style="margin-bottom: 12px;">
+        <div class="section-title" style="margin: 6px 0 2px 0;"><span>3. 자가측정사항</span></div>
+        <!-- 기상조건 표 (표간 여백 제거: seamless-table-top) -->
+        <table class="sheet-table seamless-table-top" style="margin-bottom: 0; border-bottom: none;">
           <thead>
             <tr>
               <th style="width: 12%;">측정일자</th>
@@ -2109,7 +2170,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </tr>
           </tbody>
         </table>
-        <table class="sheet-table">
+        <!-- 측정결과 표 (표간 여백 제거: seamless-table-bottom) -->
+        <table class="sheet-table seamless-table-bottom" style="margin-top: 0; margin-bottom: 2px;">
           <thead>
             <tr>
               <th style="width: 10%;">배출구</th>
@@ -2135,8 +2197,8 @@ document.addEventListener('DOMContentLoaded', () => {
             `).join('')}
           </tbody>
         </table>
-        <div class="section-title" style="margin-top: 15px;"><span>4. 원료 및 연료 사용량</span></div>
-        <table class="sheet-table">
+        <div class="section-title" style="margin-top: 6px; margin-bottom: 2px;"><span>4. 원료 및 연료 사용량</span></div>
+        <table class="sheet-table" style="margin-top: 0;">
           <thead>
             <tr>
               <th style="width: 50%;">연료명 및 사용량</th>
@@ -2145,16 +2207,16 @@ document.addEventListener('DOMContentLoaded', () => {
           </thead>
           <tbody>
             <tr>
-              <td style="padding: 10px;">${record.fuelUsage || '-'}</td>
-              <td style="padding: 10px;">${record.rawMaterialUsage || '-'}</td>
+              <td style="padding: 6px 10px;">${record.fuelUsage || '-'}</td>
+              <td style="padding: 6px 10px;">${record.rawMaterialUsage || '-'}</td>
             </tr>
           </tbody>
         </table>
-        <div class="section-title" style="margin-top: 15px;"><span>5. 환경기술인 의견 및 특이사항</span></div>
-        <div class="info-box-table" style="min-height: 50px; padding: 10px; font-size: 0.9rem;">
+        <div class="section-title" style="margin-top: 6px; margin-bottom: 2px;"><span>5. 환경기술인 의견 및 특이사항</span></div>
+        <div class="info-box-table" style="min-height: 40px; padding: 6px 10px; font-size: 0.88rem; margin-bottom: 4px;">
           ${record.engineerOpinion || '특이사항 없음. 정상 가동.'}
         </div>
-        <div class="technician-box" style="margin-top: 15px;">
+        <div class="technician-box" style="margin-top: 6px;">
           <div style="font-weight: 600;">환경기술인 : 부장 윤 경 용</div>
           <div class="technician-sign-cell">${techSignImg}</div>
         </div>
@@ -2409,26 +2471,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 홈 포털 통계 요약 갱신 함수
   async function updateHomePortalStats() {
-    const datesSet = new Set();
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('daelim_air_record_')) {
-        datesSet.add(key.replace('daelim_air_record_', ''));
-      }
-    }
-
-    if (window.SupabaseService && window.SupabaseService.isSupabaseConfigured()) {
-      try {
-        const supaRecords = await window.SupabaseService.fetchSupabaseRecords();
-        if (supaRecords && supaRecords.length > 0) {
-          supaRecords.forEach(r => datesSet.add(r.record_date));
-        }
-      } catch (err) {
-        console.warn('홈 통계 Supabase 동기화 예외:', err);
-      }
-    }
-
-    const sortedDates = Array.from(datesSet).sort();
+    // 서버 및 Supabase, localStorage의 모든 기록을 일괄 로드하여 동기화
+    const allRecords = await fetchAllAvailableRecords();
+    const sortedDates = allRecords.map(r => r.date).sort();
     const count = sortedDates.length;
     const latest = sortedDates.length > 0 ? sortedDates[sortedDates.length - 1] : new Date().toISOString().split('T')[0];
 
@@ -2436,6 +2481,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (statLatestDate) statLatestDate.textContent = latest;
     if (homeQuickDate && !homeQuickDate.value) homeQuickDate.value = latest;
     if (homeEditDate && !homeEditDate.value) homeEditDate.value = latest;
+    if (homeQuickStart && !homeQuickStart.value && sortedDates.length > 0) homeQuickStart.value = sortedDates[0];
+    if (homeQuickEnd && !homeQuickEnd.value) homeQuickEnd.value = latest;
 
     // Supabase 연동 배지 상태 동기화
     if (homeSupabaseBadge) {
@@ -2487,34 +2534,17 @@ document.addEventListener('DOMContentLoaded', () => {
   async function openBookViewer(specifiedDates = null, initialDate = null) {
     if (!bookViewerModal) return;
 
+    // 1. 전체 가용 운영기록 일괄 로드 및 동기화
+    const allRecords = await fetchAllAvailableRecords();
+    const recordsMap = new Map(allRecords.map(r => [r.date, r]));
+
     let targetDates = [];
 
-    // 1. 대상 일자 목록 수집
+    // 2. 대상 일자 목록 구성
     if (specifiedDates && specifiedDates.length > 0) {
       targetDates = [...specifiedDates].sort();
     } else {
-      // 로컬 스토리지에 저장된 모든 운영기록 일자 추출
-      const datesSet = new Set();
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith('daelim_air_record_')) {
-          datesSet.add(key.replace('daelim_air_record_', ''));
-        }
-      }
-
-      // Supabase 클라우드 기록 목록도 병합
-      if (window.SupabaseService && window.SupabaseService.isSupabaseConfigured()) {
-        try {
-          const supaList = await window.SupabaseService.fetchSupabaseRecords();
-          if (supaList && supaList.length > 0) {
-            supaList.forEach(r => datesSet.add(r.record_date));
-          }
-        } catch (err) {
-          console.warn('바인더 뷰어 Supabase 조회 예외:', err);
-        }
-      }
-
-      targetDates = Array.from(datesSet).sort();
+      targetDates = Array.from(recordsMap.keys()).sort();
     }
 
     if (targetDates.length === 0) {
@@ -2522,24 +2552,40 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // 2. 각 일자의 전체 기록 데이터 수집
+    // 3. 각 일자의 전체 기록 데이터 수집 (누락 일자는 안전 템플릿 생성)
     bookRecordList = [];
     for (const dateStr of targetDates) {
-      let rec = null;
-      const localData = localStorage.getItem('daelim_air_record_' + dateStr);
-      if (localData) {
-        try {
-          rec = JSON.parse(localData);
-        } catch (e) {}
+      let rec = recordsMap.get(dateStr);
+      if (!rec) {
+        rec = await fetchSingleRecord(dateStr);
       }
-
-      if (!rec && window.SupabaseService && window.SupabaseService.isSupabaseConfigured()) {
-        rec = await window.SupabaseService.fetchSupabaseRecordByDate(dateStr);
+      if (!rec) {
+        // 기록이 없는 경우 기본 휴무/미가동 템플릿 생성
+        const d = new Date(dateStr + 'T00:00:00');
+        const isWeekend = (d.getDay() === 0 || d.getDay() === 6);
+        rec = {
+          date: dateStr,
+          formattedDate: getFormattedDateString(dateStr),
+          isHoliday: isWeekend,
+          holidayReason: isWeekend ? '주말 휴무' : '미가동',
+          status: isWeekend ? 'HOLIDAY' : 'IDLE',
+          workHours: '09:00 ~ 18:00',
+          exhaustList: [
+            { id: '1', facility: '혼합시설', opTime: '-', note: isWeekend ? '휴무' : '미가동' },
+            { id: '2', facility: '혼합시설', opTime: '-', note: isWeekend ? '휴무' : '미가동' },
+            { id: '3', facility: '혼합시설', opTime: '-', note: isWeekend ? '휴무' : '미가동' },
+            { id: '4', facility: '혼합시설', opTime: '-', note: isWeekend ? '휴무' : '미가동' }
+          ],
+          preventionOperation: { exempt: true, text: '방지시설 면제', rows: [] },
+          preventionMaintenance: { rows: [] },
+          selfMeasurement: { measureDate: dateStr, rows: [] },
+          fuelUsage: '-',
+          rawMaterialUsage: '-',
+          engineerOpinion: isWeekend ? '주말 휴무로 설비 미가동.' : '특이사항 없음. 정상 가동 대기.',
+          technician: { name: '윤경용' }
+        };
       }
-
-      if (rec) {
-        bookRecordList.push({ date: dateStr, data: rec });
-      }
+      bookRecordList.push({ date: dateStr, data: rec });
     }
 
     if (bookRecordList.length === 0) {
@@ -2547,19 +2593,19 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // 3. 상단 날짜 선택 드롭다운 채우기
+    // 4. 상단 날짜 선택 드롭다운 채우기
     if (bookDateSelect) {
       bookDateSelect.innerHTML = '';
       bookRecordList.forEach((item, idx) => {
         const opt = document.createElement('option');
         opt.value = idx;
-        const holidayTag = item.data.isHoliday ? '🏖️ 휴무' : '⚡ 미가동/가동';
+        const holidayTag = item.data.isHoliday ? '🏖️ 휴무' : (item.data.status === 'NORMAL' ? '🟢 가동' : '⚡ 미가동');
         opt.textContent = `${item.date} (${getKoreanDayOfWeek(item.date)}) - ${holidayTag}`;
         bookDateSelect.appendChild(opt);
       });
     }
 
-    // 4. 초기 펼칠 페이지 인덱스 설정
+    // 5. 초기 펼칠 페이지 인덱스 설정
     let startIdx = 0;
     if (initialDate) {
       const found = bookRecordList.findIndex(item => item.date === initialDate);
@@ -2735,12 +2781,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // 검색 모달 내 [📖 책 넘김 뷰어로 열기] 버튼 클릭 이벤트
   if (btnModalBookView) {
     btnModalBookView.addEventListener('click', () => {
-      const checkedBoxes = document.querySelectorAll('.record-checkbox:checked');
-      if (checkedBoxes.length === 0) {
+      const selectedDates = getSelectedDates();
+      if (selectedDates.length === 0) {
         alert('책 넘김 뷰어로 열람할 일자를 하나 이상 선택해 주세요.');
         return;
       }
-      const selectedDates = Array.from(checkedBoxes).map(cb => cb.dataset.date).sort();
       closeSearchModal();
       openBookViewer(selectedDates, selectedDates[0]);
     });
@@ -2824,12 +2869,18 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // 지정 기간에 해당하는 모든 일자 추출
+      // 지정 기간에 해당하는 모든 일자 추출 (시차 오차 방지)
       const rangeDates = [];
-      const s = new Date(start);
-      const e = new Date(end);
-      for (let cur = new Date(s); cur <= e; cur.setDate(cur.getDate() + 1)) {
-        rangeDates.push(cur.toISOString().split('T')[0]);
+      const [sY, sM, sD] = start.split('-').map(Number);
+      const [eY, eM, eD] = end.split('-').map(Number);
+      const cur = new Date(sY, sM - 1, sD, 12, 0, 0);
+      const endD = new Date(eY, eM - 1, eD, 12, 0, 0);
+      while (cur <= endD) {
+        const y = cur.getFullYear();
+        const m = String(cur.getMonth() + 1).padStart(2, '0');
+        const d = String(cur.getDate()).padStart(2, '0');
+        rangeDates.push(`${y}-${m}-${d}`);
+        cur.setDate(cur.getDate() + 1);
       }
 
       openBookViewer(rangeDates, rangeDates[0]);

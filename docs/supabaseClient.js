@@ -252,6 +252,31 @@
     }
   }
 
+  /**
+   * 저장된 전체 운영기록 목록 조회 (데이터 포함)
+   * @returns {Promise<Array<{ record_date: string, record_data: object, status: string }>>}
+   */
+  async function fetchSupabaseRecords() {
+    const sb = getSupabase();
+    if (!sb) return [];
+
+    try {
+      const { data, error } = await sb
+        .from('air_operation_records')
+        .select('*')
+        .order('record_date', { ascending: true });
+
+      if (error || !data) {
+        console.warn('[Supabase] 전체 기록 조회 오류:', error);
+        return [];
+      }
+      return data;
+    } catch (err) {
+      console.warn('[Supabase] 전체 기록 조회 예외:', err);
+      return [];
+    }
+  }
+
   // 전역 서비스 객체 등록
   window.SupabaseService = {
     getSupabaseConfig,
@@ -261,8 +286,10 @@
     isSupabaseConfigured,
     testSupabaseConnection,
     fetchSupabaseRecord,
+    fetchSupabaseRecordByDate: fetchSupabaseRecord, // 별칭 등록
     saveSupabaseRecord,
-    fetchSupabaseRecordDates
+    fetchSupabaseRecordDates,
+    fetchSupabaseRecords
   };
 
   // 초기화 실행

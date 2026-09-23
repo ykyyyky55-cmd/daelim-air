@@ -368,6 +368,12 @@ app.post('/api/records/:date', async (req, res) => {
   }
 });
 
+// 저장된 전체 운영기록 일괄 조회 API
+app.get('/api/records-all', (req, res) => {
+  const records = loadRecords();
+  res.json({ success: true, count: Object.keys(records).length, records });
+});
+
 // 저장된 일자 목록 조회 API
 app.get('/api/records-list', (req, res) => {
   const records = loadRecords();
