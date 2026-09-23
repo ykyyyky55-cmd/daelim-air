@@ -25,9 +25,9 @@
     return cleaned;
   }
 
-  // 기본 Supabase 프로젝트 URL
+  // 기본 Supabase 프로젝트 URL 및 공개 키
   const DEFAULT_SUPABASE_URL = 'https://mdvgqerpterawrwejgoz.supabase.co';
-  const DEFAULT_SUPABASE_KEY = '';
+  const DEFAULT_SUPABASE_KEY = 'sb_publishable_XMVjKwHH9TydkEGgXHUINQ_PBi7SL2R';
 
   /**
    * 저장된 Supabase 연결 설정 가져오기
