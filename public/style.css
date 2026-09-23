@@ -814,3 +814,28 @@ body {
     -webkit-appearance: none;
   }
 }
+
+/* ============================================================
+   Supabase 클라우드 연동 상태 및 모달 전용 스타일
+   ============================================================ */
+.supabase-connected {
+  background: #10b981 !important;
+  color: #ffffff !important;
+}
+
+.supabase-disconnected {
+  background: #94a3b8 !important;
+  color: #ffffff !important;
+}
+
+.supabase-warning {
+  background: #f59e0b !important;
+  color: #ffffff !important;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+

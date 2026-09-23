@@ -23,6 +23,18 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnExportExcel = document.getElementById('btnExportExcel');
   const saveStatusBadge = document.getElementById('saveStatus');
   const cloudStatusBadge = document.getElementById('cloudStatus');
+  const supabaseStatusBadge = document.getElementById('supabaseStatus');
+
+  // Supabase 모달 관련 DOM 요소
+  const btnSupabaseModal = document.getElementById('btnSupabaseModal');
+  const supabaseModal = document.getElementById('supabaseModal');
+  const btnCloseSupabaseModal = document.getElementById('btnCloseSupabaseModal');
+  const supabaseUrlInput = document.getElementById('supabaseUrlInput');
+  const supabaseKeyInput = document.getElementById('supabaseKeyInput');
+  const btnTestSupabase = document.getElementById('btnTestSupabase');
+  const btnSaveSupabaseConfig = document.getElementById('btnSaveSupabaseConfig');
+  const btnDisconnectSupabase = document.getElementById('btnDisconnectSupabase');
+  const supabaseTestResult = document.getElementById('supabaseTestResult');
 
   const displayFormattedDate = document.getElementById('displayFormattedDate');
   const weatherSelect = document.getElementById('weatherSelect');
@@ -525,28 +537,64 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ============================================================
-  // 김포시 월곶면 날씨 연동 함수
+  // 김포시 월곶면 날씨 연동 함수 (로컬 서버 및 웹 직접 연동 지원)
   // ============================================================
   async function fetchWolgotWeather(targetDate) {
     btnFetchWeather.disabled = true;
     btnFetchWeather.innerHTML = '⏳ 날씨 조회 중...';
 
     try {
-      const res = await fetch(`/api/weather?date=${targetDate}`);
-      const data = await res.json();
+      let weather = '';
+      let tempStr = '';
 
-      if (data.success) {
-        weatherSelect.value = data.weather || '맑음';
-        tempRangeInput.value = data.tempStr || `${data.minTemp} ~ ${data.maxTemp}℃`;
+      // 1. 로컬 백엔드 API 우선 호출 시도
+      try {
+        const res = await fetch(`/api/weather?date=${targetDate}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success) {
+            weather = data.weather || '맑음';
+            tempStr = data.tempStr || `${data.minTemp} ~ ${data.maxTemp}℃`;
+          }
+        }
+      } catch (e) {
+        // 로컬 서버가 없는 웹 환경(GitHub Pages 등)에서는 브라우저 직접 조회로 전환
+      }
 
-        // 자가측정사항 기입칸은 사용자가 직접 입력/수정할 수 있도록 빈칸 유지
+      // 2. 백엔드 응답이 없는 경우 Open-Meteo API 브라우저 직접 호출
+      if (!weather) {
+        const openMeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=37.6975&longitude=126.5413&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Asia%2FSeoul&start_date=${targetDate}&end_date=${targetDate}`;
+        const mRes = await fetch(openMeteoUrl);
+        if (mRes.ok) {
+          const mData = await mRes.json();
+          if (mData.daily && mData.daily.weathercode && mData.daily.weathercode.length > 0) {
+            const wCode = mData.daily.weathercode[0];
+            const maxT = Math.round(mData.daily.temperature_2m_max[0]);
+            const minT = Math.round(mData.daily.temperature_2m_min[0]);
+            
+            // WMO 날씨 코드 한글 변환
+            if (wCode === 0) weather = '맑음';
+            else if ([1, 2].includes(wCode)) weather = '구름조금';
+            else if ([3, 45, 48].includes(wCode)) weather = '흐림';
+            else if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(wCode)) weather = '비';
+            else if ([71, 73, 75, 85, 86].includes(wCode)) weather = '눈';
+            else weather = '맑음';
+
+            tempStr = `${minT} ~ ${maxT}℃`;
+          }
+        }
+      }
+
+      if (weather) {
+        weatherSelect.value = weather;
+        tempRangeInput.value = tempStr;
         markUnsaved();
       } else {
-        alert('날씨 연동 안내: ' + (data.error || '날씨 정보를 불러오지 못했습니다.'));
+        alert('날씨 연동 안내: 날씨 정보를 불러오지 못했습니다.');
       }
     } catch (err) {
       console.error('날씨 조회 오류:', err);
-      alert('날씨 서버 통신에 실패했습니다.');
+      alert('날씨 정보를 불러오는 중 오류가 발생했습니다.');
     } finally {
       btnFetchWeather.disabled = false;
       btnFetchWeather.innerHTML = '<span style="font-size:1.1rem;">⛅</span> 월곶면 날씨 연동';
@@ -554,132 +602,212 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ============================================================
-  // 특정 일자 기록 로드 함수
+  // ============================================================
+  // 운영기록 데이터를 화면 UI에 반영하는 함수
+  // ============================================================
+  async function applyRecordToUI(record, isNew, targetDate) {
+    // 앞면 날씨 및 온도
+    if (record.weatherInfo) {
+      weatherSelect.value = record.weatherInfo.weather || '맑음';
+      tempRangeInput.value = record.weatherInfo.temp || '15 ~ 25℃';
+    }
+
+    // 배출구 목록 (없거나 비어있으면 기본 1~4번 혼합시설)
+    if (record.exhaustList && record.exhaustList.length > 0) {
+      currentExhaustList = record.exhaustList;
+    } else {
+      const defaultNote = record.isHoliday ? '휴무' : '미가동';
+      currentExhaustList = [
+        { id: '1', facility: '혼합시설', opTime: '-', note: defaultNote },
+        { id: '2', facility: '혼합시설', opTime: '-', note: defaultNote },
+        { id: '3', facility: '혼합시설', opTime: '-', note: defaultNote },
+        { id: '4', facility: '혼합시설', opTime: '-', note: defaultNote }
+      ];
+    }
+    renderExhaustTable();
+
+    // 방지시설 운전사항 (기본 면제 설정)
+    if (record.preventionOperation) {
+      isPreventionExempt = record.preventionOperation.exempt !== undefined ? !!record.preventionOperation.exempt : true;
+      if (record.preventionOperation.rows && record.preventionOperation.rows.length > 0) {
+        currentPreventionOpRows = record.preventionOperation.rows;
+      }
+    } else {
+      isPreventionExempt = true;
+    }
+    renderPreventionOpTable();
+
+    // 방지시설 보수사항
+    if (record.preventionMaintenance && record.preventionMaintenance.rows) {
+      currentMaintenanceRows = record.preventionMaintenance.rows;
+    }
+    renderMaintenanceTable();
+
+    // 자가측정사항 (사용자가 직접 기입 및 수정할 수 있도록 기본 빈칸 처리)
+    if (record.selfMeasurement) {
+      measureDateInput.value = record.selfMeasurement.measureDate || '';
+      selfTemp.value = record.selfMeasurement.temp || '';
+      selfHumidity.value = record.selfMeasurement.humidity || '';
+      selfPressure.value = record.selfMeasurement.pressure || '';
+      selfWindDir.value = record.selfMeasurement.windDir || '';
+      selfWindSpeed.value = record.selfMeasurement.windSpeed || '';
+
+      const radios = document.querySelectorAll('input[name="selfWeather"]');
+      radios.forEach(r => {
+        r.checked = !!(record.selfMeasurement.weather && r.value === record.selfMeasurement.weather);
+      });
+
+      if (record.selfMeasurement.rows && record.selfMeasurement.rows.length > 0) {
+        currentMeasurementRows = record.selfMeasurement.rows;
+      } else {
+        currentMeasurementRows = [
+          { exhaustNo: '', facilityName: '', item: '', density: '', dailyFlow: '', dailyEmission: '', device: '', method: '' }
+        ];
+      }
+    } else {
+      measureDateInput.value = '';
+      selfTemp.value = '';
+      selfHumidity.value = '';
+      selfPressure.value = '';
+      selfWindDir.value = '';
+      selfWindSpeed.value = '';
+      document.querySelectorAll('input[name="selfWeather"]').forEach(r => r.checked = false);
+      currentMeasurementRows = [
+        { exhaustNo: '', facilityName: '', item: '', density: '', dailyFlow: '', dailyEmission: '', device: '', method: '' }
+      ];
+    }
+    renderMeasurementTable();
+
+    // 작업시간 설정 복원
+    if (record.workHours) {
+      currentWorkHours = record.workHours;
+      if (workHoursSelect) {
+        const exists = Array.from(workHoursSelect.options).some(opt => opt.value === record.workHours);
+        if (!exists) {
+          const opt = document.createElement('option');
+          opt.value = record.workHours;
+          opt.textContent = record.workHours;
+          workHoursSelect.insertBefore(opt, workHoursSelect.lastElementChild);
+        }
+        workHoursSelect.value = record.workHours;
+      }
+    }
+
+    fuelUsageInput.value = record.fuelUsage || '-';
+    rawMaterialUsageInput.value = record.rawMaterialUsage || '-';
+    opinionInput.value = record.engineerOpinion || '특이사항 없음. 정상 가동.';
+    etcInput.value = record.etc || '-';
+
+    if (record.technician) {
+      technicianPosition.value = record.technician.position || '부장';
+      technicianName.value = record.technician.name || '윤 경 용';
+    }
+
+    // 전자결재 서명 데이터 복원
+    currentManagerSign = record.managerSign || '';
+    currentTechnicianSign = record.technicianSign || '';
+    renderSignatures();
+
+    // 신규 레코드면 날씨 자동 조회
+    if (isNew) {
+      await fetchWolgotWeather(targetDate);
+      markUnsaved();
+    } else {
+      markSaved();
+    }
+  }
+
+  // ============================================================
+  // 특정 일자 기록 로드 함수 (Supabase -> 서버 -> LocalStorage 다단계 조회)
   // ============================================================
   async function loadRecord(targetDate) {
     displayFormattedDate.textContent = getFormattedDateString(targetDate);
     measureDateInput.value = targetDate;
 
+    // 1. Supabase 클라우드 데이터베이스 우선 조회
+    if (window.SupabaseService && window.SupabaseService.isSupabaseConfigured()) {
+      try {
+        const sbRes = await window.SupabaseService.fetchSupabaseRecord(targetDate);
+        if (sbRes.success && sbRes.data) {
+          await applyRecordToUI(sbRes.data, false, targetDate);
+          return;
+        }
+      } catch (sbErr) {
+        console.warn('[Supabase] 조회 실패, 로컬 데이터 시도:', sbErr);
+      }
+    }
+
+    // 2. 로컬 백엔드 서버 조회
     try {
       const res = await fetch(`/api/records/${targetDate}`);
-      const resJson = await res.json();
-
-      if (resJson.success) {
-        const record = resJson.data;
-
-        // 앞면 날씨 및 온도
-        if (record.weatherInfo) {
-          weatherSelect.value = record.weatherInfo.weather || '맑음';
-          tempRangeInput.value = record.weatherInfo.temp || '15 ~ 25℃';
-        }
-
-        // 배출구 목록 (없거나 비어있으면 기본 1~4번 혼합시설)
-        if (record.exhaustList && record.exhaustList.length > 0) {
-          currentExhaustList = record.exhaustList;
-        } else {
-          const defaultNote = record.isHoliday ? '휴무' : '미가동';
-          currentExhaustList = [
-            { id: '1', facility: '혼합시설', opTime: '-', note: defaultNote },
-            { id: '2', facility: '혼합시설', opTime: '-', note: defaultNote },
-            { id: '3', facility: '혼합시설', opTime: '-', note: defaultNote },
-            { id: '4', facility: '혼합시설', opTime: '-', note: defaultNote }
-          ];
-        }
-        renderExhaustTable();
-
-        // 방지시설 운전사항 (기본 면제 설정)
-        if (record.preventionOperation) {
-          isPreventionExempt = record.preventionOperation.exempt !== undefined ? !!record.preventionOperation.exempt : true;
-          if (record.preventionOperation.rows && record.preventionOperation.rows.length > 0) {
-            currentPreventionOpRows = record.preventionOperation.rows;
-          }
-        } else {
-          isPreventionExempt = true;
-        }
-        renderPreventionOpTable();
-
-        // 방지시설 보수사항
-        if (record.preventionMaintenance && record.preventionMaintenance.rows) {
-          currentMaintenanceRows = record.preventionMaintenance.rows;
-        }
-        renderMaintenanceTable();
-
-        // 자가측정사항 (사용자가 직접 기입 및 수정할 수 있도록 기본 빈칸 처리)
-        if (record.selfMeasurement) {
-          measureDateInput.value = record.selfMeasurement.measureDate || '';
-          selfTemp.value = record.selfMeasurement.temp || '';
-          selfHumidity.value = record.selfMeasurement.humidity || '';
-          selfPressure.value = record.selfMeasurement.pressure || '';
-          selfWindDir.value = record.selfMeasurement.windDir || '';
-          selfWindSpeed.value = record.selfMeasurement.windSpeed || '';
-
-          const radios = document.querySelectorAll('input[name="selfWeather"]');
-          radios.forEach(r => {
-            r.checked = !!(record.selfMeasurement.weather && r.value === record.selfMeasurement.weather);
-          });
-
-          if (record.selfMeasurement.rows && record.selfMeasurement.rows.length > 0) {
-            currentMeasurementRows = record.selfMeasurement.rows;
-          } else {
-            currentMeasurementRows = [
-              { exhaustNo: '', facilityName: '', item: '', density: '', dailyFlow: '', dailyEmission: '', device: '', method: '' }
-            ];
-          }
-        } else {
-          measureDateInput.value = '';
-          selfTemp.value = '';
-          selfHumidity.value = '';
-          selfPressure.value = '';
-          selfWindDir.value = '';
-          selfWindSpeed.value = '';
-          document.querySelectorAll('input[name="selfWeather"]').forEach(r => r.checked = false);
-          currentMeasurementRows = [
-            { exhaustNo: '', facilityName: '', item: '', density: '', dailyFlow: '', dailyEmission: '', device: '', method: '' }
-          ];
-        }
-        renderMeasurementTable();
-
-        // 작업시간 설정 복원
-        if (record.workHours) {
-          currentWorkHours = record.workHours;
-          if (workHoursSelect) {
-            const exists = Array.from(workHoursSelect.options).some(opt => opt.value === record.workHours);
-            if (!exists) {
-              const opt = document.createElement('option');
-              opt.value = record.workHours;
-              opt.textContent = record.workHours;
-              workHoursSelect.insertBefore(opt, workHoursSelect.lastElementChild);
-            }
-            workHoursSelect.value = record.workHours;
-          }
-        }
-
-        fuelUsageInput.value = record.fuelUsage || '-';
-        rawMaterialUsageInput.value = record.rawMaterialUsage || '-';
-        opinionInput.value = record.engineerOpinion || '특이사항 없음. 정상 가동.';
-        etcInput.value = record.etc || '-';
-
-        if (record.technician) {
-          technicianPosition.value = record.technician.position || '부장';
-          technicianName.value = record.technician.name || '윤 경 용';
-        }
-
-        // 전자결재 서명 데이터 복원
-        currentManagerSign = record.managerSign || '';
-        currentTechnicianSign = record.technicianSign || '';
-        renderSignatures();
-
-        // 신규 레코드면 날씨 자동 조회
-        if (resJson.isNew) {
-          await fetchWolgotWeather(targetDate);
-          markUnsaved();
-        } else {
-          markSaved();
+      if (res.ok) {
+        const resJson = await res.json();
+        if (resJson.success && resJson.data) {
+          await applyRecordToUI(resJson.data, !!resJson.isNew, targetDate);
+          return;
         }
       }
-    } catch (err) {
-      console.error('기록 로드 실패:', err);
+    } catch (serverErr) {
+      // 순수 웹 환경에서는 서버가 없으므로 LocalStorage 확인
     }
+
+    // 3. 브라우저 LocalStorage 로컬 캐시 조회
+    try {
+      const localCached = localStorage.getItem('daelim_air_record_' + targetDate);
+      if (localCached) {
+        const parsed = JSON.parse(localCached);
+        await applyRecordToUI(parsed, false, targetDate);
+        return;
+      }
+    } catch (e) {
+      console.warn('LocalStorage 로드 실패:', e);
+    }
+
+    // 4. 저장된 기록이 전혀 없는 신규 날짜: 기본 양식 생성
+    const d = new Date(targetDate + 'T00:00:00');
+    const dayOfWeek = d.getDay();
+    const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6); // 토요일(6), 일요일(0)
+
+    const defaultRecord = {
+      date: targetDate,
+      isHoliday: isWeekend,
+      status: isWeekend ? 'HOLIDAY' : 'IDLE',
+      workHours: '09:00 ~ 18:00',
+      exhaustList: [
+        { id: '1', facility: '혼합시설', opTime: '-', note: isWeekend ? '휴무' : '미가동' },
+        { id: '2', facility: '혼합시설', opTime: '-', note: isWeekend ? '휴무' : '미가동' },
+        { id: '3', facility: '혼합시설', opTime: '-', note: isWeekend ? '휴무' : '미가동' },
+        { id: '4', facility: '혼합시설', opTime: '-', note: isWeekend ? '휴무' : '미가동' }
+      ],
+      preventionOperation: {
+        exempt: true,
+        text: '방지시설 면제',
+        rows: []
+      },
+      preventionMaintenance: {
+        exempt: false,
+        rows: []
+      },
+      selfMeasurement: {
+        measureDate: '',
+        weather: '',
+        temp: '',
+        humidity: '',
+        pressure: '',
+        windDir: '',
+        windSpeed: '',
+        rows: []
+      },
+      fuelUsage: '-',
+      rawMaterialUsage: '-',
+      engineerOpinion: '특이사항 없음. 정상 가동.',
+      etc: '-',
+      technician: { position: '부장', name: '윤 경 용' },
+      managerSign: '',
+      technicianSign: ''
+    };
+
+    await applyRecordToUI(defaultRecord, true, targetDate);
   }
 
   // ============================================================
@@ -731,7 +859,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ============================================================
-  // 저장하기 API 호출
+  // 저장하기 함수 (Supabase 클라우드, 로컬 서버, 브라우저 스토리지 동기화)
   // ============================================================
   async function saveCurrentRecord() {
     const targetDate = recordDateInput.value;
@@ -740,26 +868,58 @@ document.addEventListener('DOMContentLoaded', () => {
     btnSave.disabled = true;
     btnSave.textContent = '💾 저장 중...';
 
+    let anySaved = false;
+    let errorMessages = [];
+
+    // 1. 브라우저 LocalStorage 로컬 캐시 즉시 보관
+    try {
+      localStorage.setItem('daelim_air_record_' + targetDate, JSON.stringify(payload));
+      anySaved = true;
+    } catch (e) {
+      console.warn('LocalStorage 저장 실패:', e);
+    }
+
+    // 2. Supabase 클라우드 데이터베이스 저장 (연동 설정 시)
+    if (window.SupabaseService && window.SupabaseService.isSupabaseConfigured()) {
+      try {
+        const recordStatus = payload.isHoliday ? 'HOLIDAY' : 'NORMAL';
+        const sbRes = await window.SupabaseService.saveSupabaseRecord(targetDate, payload, recordStatus);
+        if (sbRes.success) {
+          anySaved = true;
+        } else {
+          errorMessages.push('Supabase: ' + sbRes.message);
+        }
+      } catch (sbErr) {
+        console.error('Supabase 저장 예외:', sbErr);
+        errorMessages.push('Supabase 저장 실패');
+      }
+    }
+
+    // 3. 로컬 백엔드 서버 저장 (Node.js 실행 중인 경우)
     try {
       const res = await fetch(`/api/records/${targetDate}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      const data = await res.json();
-
-      if (data.success) {
-        markSaved();
-      } else {
-        alert('저장 실패: ' + data.message);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          anySaved = true;
+        }
       }
     } catch (err) {
-      console.error('저장 오류:', err);
-      alert('서버 저장 중 오류가 발생했습니다.');
-    } finally {
-      btnSave.disabled = false;
-      btnSave.textContent = '💾 저장하기';
+      // 순수 웹(GitHub Pages) 모드이거나 백엔드가 꺼져 있는 경우 에러 무시
     }
+
+    if (anySaved) {
+      markSaved();
+    } else {
+      alert('저장 실패: ' + (errorMessages.join('\n') || '데이터를 저장하지 못했습니다.'));
+    }
+
+    btnSave.disabled = false;
+    btnSave.textContent = '💾 저장하기';
   }
 
   // 날짜 이동 헬퍼 함수
@@ -878,12 +1038,179 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // 인쇄 및 엑셀 다운로드
+  // 인쇄 및 엑셀 다운로드 (로컬 서버 및 웹 브라우저 직접 생성 지원)
   btnPrint.addEventListener('click', () => window.print());
-  btnExportExcel.addEventListener('click', () => {
+
+  btnExportExcel.addEventListener('click', async () => {
     const dateStr = recordDateInput.value;
-    window.location.href = `/api/export/excel/${dateStr}`;
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+    // 로컬 서버 실행 중이면 백엔드 다운로드 시도
+    if (isLocalhost) {
+      try {
+        window.location.href = `/api/export/excel/${dateStr}`;
+        return;
+      } catch (e) {
+        // 실패 시 브라우저 직접 생성으로 이동
+      }
+    }
+
+    // 웹 클라우드(GitHub Pages 등) 또는 오프라인 환경: 브라우저 직접 엑셀 생성
+    await exportClientExcel(dateStr);
   });
+
+  /**
+   * 브라우저 클라이언트에서 직접 ExcelJS를 사용하여 엑셀 파일을 생성하고 다운로드합니다.
+   * @param {string} dateStr 
+   */
+  async function exportClientExcel(dateStr) {
+    if (!window.ExcelJS) {
+      alert('ExcelJS 라이브러리를 불러오지 못했습니다. 네트워크를 확인해주세요.');
+      return;
+    }
+
+    btnExportExcel.disabled = true;
+    btnExportExcel.textContent = '📊 엑셀 생성 중...';
+
+    try {
+      const data = collectFormData();
+      const workbook = new window.ExcelJS.Workbook();
+      workbook.creator = '대림 공조기록 시스템';
+      const sheetName = dateStr.replace(/-/g, '').slice(4);
+      const sheet = workbook.addWorksheet(sheetName);
+
+      sheet.pageSetup = {
+        paperSize: 9,
+        orientation: 'portrait',
+        fitToPage: true,
+        fitToWidth: 1,
+        fitToHeight: 2
+      };
+
+      sheet.columns = [
+        { width: 5 }, { width: 5 }, { width: 5 }, { width: 7 },
+        { width: 7 }, { width: 5 }, { width: 5 }, { width: 5 },
+        { width: 5 }, { width: 5 }, { width: 5 }, { width: 6 },
+        { width: 6 }, { width: 6 }, { width: 6 }, { width: 8 }
+      ];
+
+      // 제목
+      sheet.mergeCells('A1:L3');
+      const titleCell = sheet.getCell('A1');
+      titleCell.value = '대기배출시설 및 방지시설 운영기록부';
+      titleCell.font = { name: '맑은 고딕', size: 14, bold: true };
+      titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+
+      // 결재란
+      sheet.mergeCells('M1:M3');
+      sheet.getCell('M1').value = '결\n재';
+      sheet.getCell('M1').alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+      sheet.getCell('N1').value = '담당';
+      sheet.getCell('O1').value = '부서장';
+      sheet.getCell('P1').value = '환경기술인';
+
+      // 일자/날씨
+      sheet.mergeCells('A4:P4');
+      const weatherText = data.weatherInfo ? `${data.weatherInfo.weather || '맑음'} (기온: ${data.weatherInfo.temp || '-'})` : '맑음';
+      sheet.getCell('A4').value = `■ 작성일자: ${data.formattedDate || dateStr}   |   ■ 날씨: ${weatherText}`;
+      sheet.getCell('A4').font = { bold: true };
+
+      // 1. 배출시설 운전사항
+      sheet.mergeCells('A6:P6');
+      sheet.getCell('A6').value = '1. 배출시설 운전사항';
+      sheet.getCell('A6').font = { bold: true };
+
+      sheet.mergeCells('A7:B7'); sheet.getCell('A7').value = '배출구';
+      sheet.mergeCells('C7:H7'); sheet.getCell('C7').value = '배출시설명';
+      sheet.mergeCells('I7:M7'); sheet.getCell('I7').value = '가동시간';
+      sheet.mergeCells('N7:P7'); sheet.getCell('N7').value = '비고';
+
+      let rIdx = 8;
+      (data.exhaustList || []).forEach(item => {
+        sheet.mergeCells(`A${rIdx}:B${rIdx}`); sheet.getCell(`A${rIdx}`).value = item.id + '번';
+        sheet.mergeCells(`C${rIdx}:H${rIdx}`); sheet.getCell(`C${rIdx}`).value = item.facility;
+        sheet.mergeCells(`I${rIdx}:M${rIdx}`); sheet.getCell(`I${rIdx}`).value = item.opTime;
+        sheet.mergeCells(`N${rIdx}:P${rIdx}`); sheet.getCell(`N${rIdx}`).value = item.note;
+        rIdx++;
+      });
+
+      // 2. 방지시설 운전사항
+      rIdx++;
+      sheet.mergeCells(`A${rIdx}:P${rIdx}`);
+      sheet.getCell(`A${rIdx}`).value = '2. 방지시설 운전사항 (면제)';
+      sheet.getCell(`A${rIdx}`).font = { bold: true };
+      rIdx++;
+      sheet.mergeCells(`A${rIdx}:P${rIdx}`);
+      sheet.getCell(`A${rIdx}`).value = '방지시설 설치 면제 사업장 (기록 생략)';
+      sheet.getCell(`A${rIdx}`).alignment = { horizontal: 'center' };
+      rIdx += 2;
+
+      // 3. 자가측정사항
+      sheet.mergeCells(`A${rIdx}:P${rIdx}`);
+      sheet.getCell(`A${rIdx}`).value = '3. 자가측정사항';
+      sheet.getCell(`A${rIdx}`).font = { bold: true };
+      rIdx++;
+      sheet.mergeCells(`A${rIdx}:B${rIdx}`); sheet.getCell(`A${rIdx}`).value = '배출구';
+      sheet.mergeCells(`C${rIdx}:F${rIdx}`); sheet.getCell(`C${rIdx}`).value = '오염물질';
+      sheet.mergeCells(`G${rIdx}:I${rIdx}`); sheet.getCell(`G${rIdx}`).value = '농도';
+      sheet.mergeCells(`J${rIdx}:L${rIdx}`); sheet.getCell(`J${rIdx}`).value = '유량';
+      sheet.mergeCells(`M${rIdx}:P${rIdx}`); sheet.getCell(`M${rIdx}`).value = '측정방법';
+      rIdx++;
+
+      (data.selfMeasurement && data.selfMeasurement.rows ? data.selfMeasurement.rows : []).forEach(row => {
+        sheet.mergeCells(`A${rIdx}:B${rIdx}`); sheet.getCell(`A${rIdx}`).value = row.exhaustNo || '-';
+        sheet.mergeCells(`C${rIdx}:F${rIdx}`); sheet.getCell(`C${rIdx}`).value = row.item || '-';
+        sheet.mergeCells(`G${rIdx}:I${rIdx}`); sheet.getCell(`G${rIdx}`).value = row.density || '-';
+        sheet.mergeCells(`J${rIdx}:L${rIdx}`); sheet.getCell(`J${rIdx}`).value = row.dailyFlow || '-';
+        sheet.mergeCells(`M${rIdx}:P${rIdx}`); sheet.getCell(`M${rIdx}`).value = row.method || '-';
+        rIdx++;
+      });
+
+      // 4. 기술인 의견
+      rIdx++;
+      sheet.mergeCells(`A${rIdx}:P${rIdx}`);
+      sheet.getCell(`A${rIdx}`).value = '4. 환경기술인 의견 및 특이사항';
+      sheet.getCell(`A${rIdx}`).font = { bold: true };
+      rIdx++;
+      sheet.mergeCells(`A${rIdx}:P${rIdx}`);
+      sheet.getCell(`A${rIdx}`).value = data.engineerOpinion || '특이사항 없음. 정상 가동.';
+
+      // 테두리 스타일 적용
+      sheet.eachRow((row) => {
+        row.eachCell((cell) => {
+          if (!cell.font) cell.font = { name: '맑은 고딕', size: 9 };
+          if (!cell.alignment) cell.alignment = { vertical: 'middle', horizontal: 'center' };
+          cell.border = {
+            top: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+            left: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+            bottom: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+            right: { style: 'thin', color: { argb: 'FFD1D5DB' } }
+          };
+        });
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const filename = `대기배출시설_운영기록부_${dateStr}.xlsx`;
+      
+      if (window.saveAs) {
+        window.saveAs(blob, filename);
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error('브라우저 엑셀 다운로드 오류:', err);
+      alert('엑셀 파일 생성 중 오류가 발생했습니다: ' + err.message);
+    } finally {
+      btnExportExcel.disabled = false;
+      btnExportExcel.textContent = '📊 엑셀 다운로드';
+    }
+  }
 
   // ============================================================
   // 전자결재 렌더링 및 모달 컨트롤
@@ -1153,6 +1480,111 @@ document.addEventListener('DOMContentLoaded', () => {
       elem.addEventListener('input', () => markUnsaved());
     }
   });
+
+  // ============================================================
+  // Supabase 클라우드 연동 모달 및 상태 관리
+  // ============================================================
+  function updateSupabaseStatusBadge() {
+    if (!supabaseStatusBadge) return;
+    if (window.SupabaseService && window.SupabaseService.isSupabaseConfigured()) {
+      supabaseStatusBadge.textContent = '⚡ Supabase 연동됨';
+      supabaseStatusBadge.className = 'status-badge supabase-connected';
+      supabaseStatusBadge.title = 'Supabase 클라우드 데이터베이스 연동 활성화 (클릭 시 설정)';
+    } else {
+      supabaseStatusBadge.textContent = '⚡ Supabase 미연동';
+      supabaseStatusBadge.className = 'status-badge supabase-disconnected';
+      supabaseStatusBadge.title = 'Supabase 미연동 (로컬 모드로 동작 중, 클릭 시 설정)';
+    }
+  }
+
+  function openSupabaseModal() {
+    if (!supabaseModal) return;
+    const config = window.SupabaseService ? window.SupabaseService.getSupabaseConfig() : { url: '', key: '' };
+    supabaseUrlInput.value = config.url || '';
+    supabaseKeyInput.value = config.key || '';
+    supabaseTestResult.style.display = 'none';
+    supabaseTestResult.textContent = '';
+    supabaseModal.style.display = 'flex';
+  }
+
+  function closeSupabaseModal() {
+    if (supabaseModal) supabaseModal.style.display = 'none';
+  }
+
+  if (btnSupabaseModal) btnSupabaseModal.addEventListener('click', openSupabaseModal);
+  if (supabaseStatusBadge) supabaseStatusBadge.addEventListener('click', openSupabaseModal);
+  if (btnCloseSupabaseModal) btnCloseSupabaseModal.addEventListener('click', closeSupabaseModal);
+  if (supabaseModal) {
+    supabaseModal.addEventListener('click', (e) => {
+      if (e.target === supabaseModal) closeSupabaseModal();
+    });
+  }
+
+  if (btnTestSupabase) {
+    btnTestSupabase.addEventListener('click', async () => {
+      const url = supabaseUrlInput.value.trim();
+      const key = supabaseKeyInput.value.trim();
+      btnTestSupabase.disabled = true;
+      btnTestSupabase.textContent = '⏳ 테스트 중...';
+      supabaseTestResult.style.display = 'block';
+      supabaseTestResult.style.background = '#f1f5f9';
+      supabaseTestResult.style.color = '#334155';
+      supabaseTestResult.textContent = 'Supabase 서버 연결을 확인하고 있습니다...';
+
+      const res = await window.SupabaseService.testSupabaseConnection(url, key);
+      btnTestSupabase.disabled = false;
+      btnTestSupabase.textContent = '🔌 연결 테스트';
+
+      if (res.success) {
+        if (res.warning) {
+          supabaseTestResult.style.background = '#fef3c7';
+          supabaseTestResult.style.color = '#92400e';
+          supabaseTestResult.innerHTML = '⚠️ ' + res.message;
+        } else {
+          supabaseTestResult.style.background = '#dcfce7';
+          supabaseTestResult.style.color = '#15803d';
+          supabaseTestResult.innerHTML = '✅ ' + res.message;
+        }
+      } else {
+        supabaseTestResult.style.background = '#fee2e2';
+        supabaseTestResult.style.color = '#b91c1c';
+        supabaseTestResult.innerHTML = '❌ ' + res.message;
+      }
+    });
+  }
+
+  if (btnSaveSupabaseConfig) {
+    btnSaveSupabaseConfig.addEventListener('click', async () => {
+      const url = supabaseUrlInput.value.trim();
+      const key = supabaseKeyInput.value.trim();
+      if (!url || !key) {
+        if (!confirm('URL 또는 API 키가 비어있습니다. 연동을 해제하시겠습니까?')) return;
+      }
+
+      window.SupabaseService.saveSupabaseConfig(url, key);
+      updateSupabaseStatusBadge();
+      closeSupabaseModal();
+      alert('Supabase 연동 설정이 저장되었습니다.');
+      // 현재 일자 기록 Supabase에서 다시 로드 시도
+      await loadRecord(recordDateInput.value);
+    });
+  }
+
+  if (btnDisconnectSupabase) {
+    btnDisconnectSupabase.addEventListener('click', () => {
+      if (confirm('Supabase 연동을 해제하시겠습니까? (로컬/오프라인 모드로 동작합니다)')) {
+        window.SupabaseService.saveSupabaseConfig('', '');
+        supabaseUrlInput.value = '';
+        supabaseKeyInput.value = '';
+        updateSupabaseStatusBadge();
+        closeSupabaseModal();
+        alert('Supabase 연동이 해제되었습니다.');
+      }
+    });
+  }
+
+  // 초기 Supabase 상태 표시 갱신
+  updateSupabaseStatusBadge();
 
   // 초기 로딩 (오늘 날짜)
   const todayStr = new Date().toISOString().split('T')[0];

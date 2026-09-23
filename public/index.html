@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>대기배출시설 및 방지시설 운영기록부 작성 시스템</title>
   <link rel="stylesheet" href="style.css">
+  <!-- Supabase 공식 클라이언트 라이브러리 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- 브라우저 직접 엑셀 파일 생성 및 저장 라이브러리 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 </head>
 <body>
 
@@ -15,6 +20,7 @@
         <h1>대기배출시설 및 방지시설 운영기록부</h1>
         <span id="saveStatus" class="status-badge status-saved">저장됨</span>
         <span id="cloudStatus" class="status-badge" style="background:#0284c7; color:#fff;" title="로컬 및 원격 클라우드 실시간 동기화 상태">☁️ 클라우드 동기화 완료</span>
+        <span id="supabaseStatus" class="status-badge" style="background:#10b981; color:#fff; cursor:pointer;" title="Supabase 데이터베이스 연동 상태 (클릭 시 설정)">⚡ Supabase 연동됨</span>
       </div>
 
       <div class="controls-area">
@@ -54,6 +60,11 @@
         </button>
         <button type="button" id="btnSetAllHoliday" class="btn btn-default" title="모든 배출구를 휴무(-) 상태로 일괄 설정">
           🏖️ 전체 휴무
+        </button>
+
+        <!-- Supabase 클라우드 설정 버튼 -->
+        <button type="button" id="btnSupabaseModal" class="btn btn-default" title="Supabase 클라우드 데이터베이스 연동 설정" style="border-color:#10b981; color:#047857; font-weight:600;">
+          ⚡ Supabase 연동
         </button>
 
         <!-- 저장 / 인쇄 / 엑셀 다운로드 버튼 -->
@@ -386,6 +397,54 @@
     </div>
   </div>
 
+  <!-- Supabase 클라우드 연동 설정 모달 -->
+  <div id="supabaseModal" class="modal-overlay no-print" style="display: none;">
+    <div class="modal-content" style="max-width: 520px;">
+      <div class="modal-header">
+        <h3 style="display: flex; align-items: center; gap: 8px;">
+          <span style="color: #10b981;">⚡</span> Supabase 클라우드 데이터 연동
+        </h3>
+        <button type="button" id="btnCloseSupabaseModal" class="btn-close">&times;</button>
+      </div>
+      <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px; font-size: 0.9rem;">
+        <p style="color: #475569; margin: 0; line-height: 1.5;">
+          Supabase 데이터베이스와 실시간으로 연동하여 웹 브라우저나 모바일 등 어디서든 기록을 안전하게 저장하고 조회할 수 있습니다.
+        </p>
+        <div>
+          <label style="display: block; font-weight: 600; margin-bottom: 4px; color: #1e293b;">
+            Supabase Project URL
+          </label>
+          <input type="text" id="supabaseUrlInput" placeholder="https://your-project.supabase.co" class="form-input" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box;">
+        </div>
+        <div>
+          <label style="display: block; font-weight: 600; margin-bottom: 4px; color: #1e293b;">
+            Supabase Anon API Key (공개 키)
+          </label>
+          <input type="password" id="supabaseKeyInput" placeholder="eyJhbGciOiJIUzI1NiIsIn..." class="form-input" style="width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; box-sizing: border-box;">
+        </div>
+        <div id="supabaseTestResult" style="display: none; padding: 10px; border-radius: 4px; font-size: 0.85rem; line-height: 1.4;"></div>
+        <div style="background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; font-size: 0.8rem; color: #64748b;">
+          💡 <strong>테이블 생성 안내:</strong> Supabase [SQL Editor]에서 프로젝트의 <code>supabase_schema.sql</code> 스크립트를 1회 실행하시면 전용 테이블이 자동 생성됩니다.
+        </div>
+      </div>
+      <div class="modal-footer" style="display: flex; justify-content: space-between;">
+        <button type="button" id="btnTestSupabase" class="btn btn-default" style="border-color: #0284c7; color: #0284c7;">
+          🔌 연결 테스트
+        </button>
+        <div style="display: flex; gap: 8px;">
+          <button type="button" id="btnDisconnectSupabase" class="btn btn-default" style="color: #dc2626;">
+            연동 해제
+          </button>
+          <button type="button" id="btnSaveSupabaseConfig" class="btn btn-primary">
+            💾 설정 저장
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Supabase 연동 클라이언트 스크립트 -->
+  <script src="supabaseClient.js"></script>
   <!-- 프론트엔드 비즈니스 로직 스크립트 -->
   <script src="app.js"></script>
 </body>

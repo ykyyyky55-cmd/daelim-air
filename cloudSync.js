@@ -78,7 +78,6 @@ async function syncToCloud(dateStr, recordData) {
         config.syncStatus = '정상 동기화됨';
         saveCloudConfig(config);
         console.log(`[클라우드 동기화 성공] ${dateStr} 원격 전송 완료`);
-        return { success: true, message: '원격 클라우드 저장 완료' };
       } else {
         throw new Error(`HTTP ${response.status}`);
       }
@@ -86,15 +85,49 @@ async function syncToCloud(dateStr, recordData) {
       console.error(`[클라우드 원격 전송 실패]:`, err.message);
       config.syncStatus = `원격 전송 실패 (${err.message}) - 로컬 클라우드 스냅샷 보관됨`;
       saveCloudConfig(config);
-      return { success: true, message: `로컬 클라우드 백업 완료 (원격 재시도 대기)` };
+    }
+  }
+
+  // 3. Supabase REST API 연동이 설정된 경우 자동 동기화
+  const supabaseUrl = process.env.SUPABASE_URL || config.supabaseUrl;
+  const supabaseKey = process.env.SUPABASE_ANON_KEY || config.supabaseKey;
+  if (supabaseUrl && supabaseKey) {
+    try {
+      const cleanUrl = supabaseUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
+      const endpoint = `${cleanUrl}/rest/v1/air_operation_records`;
+      const sbRes = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'apikey': supabaseKey,
+          'Authorization': `Bearer ${supabaseKey}`,
+          'Content-Type': 'application/json',
+          'Prefer': 'resolution=merge-duplicates'
+        },
+        body: JSON.stringify({
+          record_date: dateStr,
+          record_data: recordData,
+          status: recordData.isHoliday ? 'HOLIDAY' : 'NORMAL',
+          updated_at: new Date().toISOString()
+        })
+      });
+      if (sbRes.ok) {
+        console.log(`[Supabase 클라우드 동기화] ${dateStr} 자동 업서트 완료`);
+      } else {
+        const errText = await sbRes.text();
+        console.warn(`[Supabase 동기화 알림]: HTTP ${sbRes.status} ${errText}`);
+      }
+    } catch (sbErr) {
+      console.error(`[Supabase 동기화 예외]:`, sbErr.message);
     }
   }
 
   // 설정된 외부 URL이 없을 때는 로컬 클라우드 스토리지에 안전 보관
   config.lastSyncTime = timestamp;
-  config.syncStatus = '로컬 클라우드 스토리지 보관 완료';
-  saveCloudConfig(config);
-  console.log(`[클라우드 스토리지 보관] ${dateStr} 백업 완료`);
+  if (!config.webhookUrl) {
+    config.syncStatus = '로컬 클라우드 스토리지 보관 완료';
+    saveCloudConfig(config);
+    console.log(`[클라우드 스토리지 보관] ${dateStr} 백업 완료`);
+  }
   return { success: true, message: '클라우드 스토리지 보관 완료' };
 }
 
