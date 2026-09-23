@@ -2170,7 +2170,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ============================================================
-  // 일괄 열람 (Batch View) 실행
+  // 일괄 열람 (Batch View) 실행 -> 책 뷰어 형식으로 일원화하여 양식 배치 완벽 보장
   // ============================================================
   const batchViewBanner = document.getElementById('batchViewBanner');
   const batchViewContainer = document.getElementById('batchViewContainer');
@@ -2189,30 +2189,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     closeSearchModal();
-    if (batchViewCount) batchViewCount.textContent = selectedDates.length;
-    if (batchViewContainer) batchViewContainer.innerHTML = '<div style="padding: 40px; font-size: 1.1rem; color: #475569;">⏳ 선택된 운영기록을 불러오는 중...</div>';
-    if (singleWorkspace) singleWorkspace.style.display = 'none';
-    if (batchViewBanner) batchViewBanner.style.display = 'block';
-    if (batchViewContainer) batchViewContainer.style.display = 'flex';
-
-    const allRecords = await fetchAllAvailableRecords();
-    const recordsMap = new Map(allRecords.map(r => [r.date, r]));
-
-    const htmlChunks = [];
-    for (const dateStr of selectedDates) {
-      const rec = recordsMap.get(dateStr) || { date: dateStr, formattedDate: getFormattedDateString(dateStr) };
-      htmlChunks.push(`
-        <div class="batch-date-separator">📅 ${rec.formattedDate || dateStr} 운영기록부</div>
-        <div style="display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; width: 100%;">
-          ${buildSheetsHtmlForRecord(rec, false)}
-        </div>
-      `);
-    }
-
-    if (batchViewContainer) {
-      batchViewContainer.innerHTML = htmlChunks.join('');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    // 모든 열람은 양식 깨짐이 없는 책 뷰어(양면 펼침 바인더) 형식으로 실행
+    await openBookViewer(selectedDates, selectedDates[0]);
   }
 
   function exitBatchViewMode() {
@@ -2383,15 +2361,107 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnBatchExcelCurrent) btnBatchExcelCurrent.addEventListener('click', executeBatchExcel);
 
   // ============================================================
+  // 홈 화면 (Home Portal Dashboard) 및 화면 전환 네비게이션 로직
+  // ============================================================
+  const homeScreen = document.getElementById('homeScreen');
+  const editorScreen = document.getElementById('editorScreen');
+  const btnBackToHome = document.getElementById('btnBackToHome');
+  const btnGoEditorToday = document.getElementById('btnGoEditorToday');
+  const btnGoBookViewerAll = document.getElementById('btnGoBookViewerAll');
+  const btnGoSearchModal = document.getElementById('btnGoSearchModal');
+  const btnHomeOpenSupabaseModal = document.getElementById('btnHomeOpenSupabaseModal');
+  const homeSupabaseBadge = document.getElementById('homeSupabaseBadge');
+
+  // 홈 빠른 열람 요소들
+  const homeQuickDate = document.getElementById('homeQuickDate');
+  const btnHomeViewDate = document.getElementById('btnHomeViewDate');
+  const homeQuickStart = document.getElementById('homeQuickStart');
+  const homeQuickEnd = document.getElementById('homeQuickEnd');
+  const btnHomeViewRange = document.getElementById('btnHomeViewRange');
+  const btnHomeViewAll = document.getElementById('btnHomeViewAll');
+
+  // 홈 대시보드 통계 요소들
+  const statTotalCount = document.getElementById('statTotalCount');
+  const statLatestDate = document.getElementById('statLatestDate');
+
+  // 홈 포털 대시보드 화면 표시 함수
+  async function showHomeScreen() {
+    if (bookViewerModal) bookViewerModal.style.display = 'none';
+    if (editorScreen) editorScreen.style.display = 'none';
+    if (homeScreen) homeScreen.style.display = 'flex';
+    document.body.style.overflow = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    await updateHomePortalStats();
+  }
+
+  // 단일 작성 및 편집 화면 표시 함수
+  function showEditorScreen(targetDate = null) {
+    if (homeScreen) homeScreen.style.display = 'none';
+    if (bookViewerModal) bookViewerModal.style.display = 'none';
+    if (editorScreen) editorScreen.style.display = 'block';
+    document.body.style.overflow = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    const dateToLoad = targetDate || recordDateInput.value || new Date().toISOString().split('T')[0];
+    recordDateInput.value = dateToLoad;
+    loadRecord(dateToLoad);
+  }
+
+  // 홈 포털 통계 요약 갱신 함수
+  async function updateHomePortalStats() {
+    const datesSet = new Set();
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('daelim_air_record_')) {
+        datesSet.add(key.replace('daelim_air_record_', ''));
+      }
+    }
+
+    if (window.SupabaseService && window.SupabaseService.isSupabaseConfigured()) {
+      try {
+        const supaRecords = await window.SupabaseService.fetchSupabaseRecords();
+        if (supaRecords && supaRecords.length > 0) {
+          supaRecords.forEach(r => datesSet.add(r.record_date));
+        }
+      } catch (err) {
+        console.warn('홈 통계 Supabase 동기화 예외:', err);
+      }
+    }
+
+    const sortedDates = Array.from(datesSet).sort();
+    const count = sortedDates.length;
+    const latest = sortedDates.length > 0 ? sortedDates[sortedDates.length - 1] : new Date().toISOString().split('T')[0];
+
+    if (statTotalCount) statTotalCount.textContent = `${count} 일`;
+    if (statLatestDate) statLatestDate.textContent = latest;
+    if (homeQuickDate && !homeQuickDate.value) homeQuickDate.value = latest;
+
+    // Supabase 연동 배지 상태 동기화
+    if (homeSupabaseBadge) {
+      if (window.SupabaseService && window.SupabaseService.isSupabaseConfigured()) {
+        homeSupabaseBadge.textContent = '⚡ Supabase 연동됨';
+        homeSupabaseBadge.style.background = '#10b981';
+      } else {
+        homeSupabaseBadge.textContent = '⚡ Supabase 미연동';
+        homeSupabaseBadge.style.background = '#64748b';
+      }
+    }
+  }
+
+  // ============================================================
   // 책 넘김 바인더 뷰어 (Flipbook / Binder Viewer) 로직
   // ============================================================
   const bookViewerModal = document.getElementById('bookViewerModal');
   const bookPageIndicator = document.getElementById('bookPageIndicator');
+  const bookBottomIndicator = document.getElementById('bookBottomIndicator');
   const bookDateSelect = document.getElementById('bookDateSelect');
+  const btnBookBackHome = document.getElementById('btnBookBackHome');
   const btnBookPrevTop = document.getElementById('btnBookPrevTop');
   const btnBookNextTop = document.getElementById('btnBookNextTop');
   const btnBookPrevSide = document.getElementById('btnBookPrevSide');
   const btnBookNextSide = document.getElementById('btnBookNextSide');
+  const btnBookPrevBottom = document.getElementById('btnBookPrevBottom');
+  const btnBookNextBottom = document.getElementById('btnBookNextBottom');
   const btnCloseBookViewer = document.getElementById('btnCloseBookViewer');
   const btnBookPrintCurrent = document.getElementById('btnBookPrintCurrent');
   const btnBookEditCurrent = document.getElementById('btnBookEditCurrent');
@@ -2515,12 +2585,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!currentItem) return;
 
     // 인디케이터 배지 및 드롭다운 동기화
-    if (bookPageIndicator) {
-      bookPageIndicator.textContent = `${bookCurrentIndex + 1} / ${bookRecordList.length}`;
-    }
-    if (bookDateSelect) {
-      bookDateSelect.value = bookCurrentIndex;
-    }
+    const indicatorText = `${bookCurrentIndex + 1} / ${bookRecordList.length}`;
+    if (bookPageIndicator) bookPageIndicator.textContent = indicatorText;
+    if (bookBottomIndicator) bookBottomIndicator.textContent = indicatorText;
+    if (bookDateSelect) bookDateSelect.value = bookCurrentIndex;
 
     // 이전/다음 버튼 활성/비활성화 처리
     const isFirst = bookCurrentIndex === 0;
@@ -2529,6 +2597,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnBookNextTop) btnBookNextTop.disabled = isLast;
     if (btnBookPrevSide) btnBookPrevSide.disabled = isFirst;
     if (btnBookNextSide) btnBookNextSide.disabled = isLast;
+    if (btnBookPrevBottom) btnBookPrevBottom.disabled = isFirst;
+    if (btnBookNextBottom) btnBookNextBottom.disabled = isLast;
 
     // 책 넘김 3D 플립 애니메이션 적용
     bookSpread.classList.remove('flip-animation-next', 'flip-animation-prev');
@@ -2571,7 +2641,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // 현재 보고 있는 일자 양식 인쇄 실행
+  // 현재 보고 있는 일자 양식 인쇄 실행 (A4 인쇄 모드)
   function printBookCurrentRecord() {
     if (bookRecordList.length === 0) return;
     const currentItem = bookRecordList[bookCurrentIndex];
@@ -2595,8 +2665,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const targetDate = currentItem.date;
     closeBookViewer();
-    recordDateInput.value = targetDate;
-    loadRecord(targetDate);
+    showEditorScreen(targetDate);
   }
 
   // 이벤트 리스너 등록
@@ -2604,9 +2673,20 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btnBookNextTop) btnBookNextTop.addEventListener('click', () => navigateBook('next'));
   if (btnBookPrevSide) btnBookPrevSide.addEventListener('click', () => navigateBook('prev'));
   if (btnBookNextSide) btnBookNextSide.addEventListener('click', () => navigateBook('next'));
+  if (btnBookPrevBottom) btnBookPrevBottom.addEventListener('click', () => navigateBook('prev'));
+  if (btnBookNextBottom) btnBookNextBottom.addEventListener('click', () => navigateBook('next'));
+
   if (btnCloseBookViewer) btnCloseBookViewer.addEventListener('click', closeBookViewer);
   if (btnBookPrintCurrent) btnBookPrintCurrent.addEventListener('click', printBookCurrentRecord);
   if (btnBookEditCurrent) btnBookEditCurrent.addEventListener('click', editBookCurrentRecord);
+
+  // 책 뷰어 상단 [🏠 홈으로] 버튼
+  if (btnBookBackHome) {
+    btnBookBackHome.addEventListener('click', () => {
+      closeBookViewer();
+      showHomeScreen();
+    });
+  }
 
   if (bookDateSelect) {
     bookDateSelect.addEventListener('change', (e) => {
@@ -2619,15 +2699,23 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 키보드 좌우 화살표키 책장 넘김 및 ESC 닫기 단축키
+  // 키보드 방향키, PageUp/PageDown 책장 넘김 및 ESC 닫기 단축키
   window.addEventListener('keydown', (e) => {
     if (bookViewerModal && bookViewerModal.style.display === 'flex') {
-      if (e.key === 'ArrowLeft') {
+      if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
         e.preventDefault();
         navigateBook('prev');
-      } else if (e.key === 'ArrowRight') {
+      } else if (e.key === 'ArrowRight' || e.key === 'PageDown') {
         e.preventDefault();
         navigateBook('next');
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        bookCurrentIndex = 0;
+        renderBookSpread('prev');
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        bookCurrentIndex = bookRecordList.length - 1;
+        renderBookSpread('next');
       } else if (e.key === 'Escape') {
         e.preventDefault();
         closeBookViewer();
@@ -2656,8 +2744,92 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 초기 로딩 (오늘 날짜)
+  // ============================================================
+  // 홈 화면 버튼 이벤트 연결
+  // ============================================================
+  // 1. [🏠 홈으로] 뒤로가기 버튼
+  if (btnBackToHome) {
+    btnBackToHome.addEventListener('click', () => {
+      showHomeScreen();
+    });
+  }
+
+  // 2. 홈 카드: [✍️ 운영기록부 작성 / 편집]
+  if (btnGoEditorToday) {
+    btnGoEditorToday.addEventListener('click', () => {
+      showEditorScreen(recordDateInput.value || new Date().toISOString().split('T')[0]);
+    });
+  }
+
+  // 3. 홈 카드: [📖 책 뷰어로 전체 열람]
+  if (btnGoBookViewerAll) {
+    btnGoBookViewerAll.addEventListener('click', () => {
+      openBookViewer();
+    });
+  }
+
+  // 4. 홈 카드: [📑 일괄 검색 및 인쇄 창]
+  if (btnGoSearchModal) {
+    btnGoSearchModal.addEventListener('click', () => {
+      openSearchModal();
+    });
+  }
+
+  // 5. 홈 상단: [⚡ 클라우드 설정]
+  if (btnHomeOpenSupabaseModal && btnSupabaseModal) {
+    btnHomeOpenSupabaseModal.addEventListener('click', () => {
+      btnSupabaseModal.click();
+    });
+  }
+
+  // 6. 빠른 일자 선택 열람
+  if (btnHomeViewDate) {
+    btnHomeViewDate.addEventListener('click', () => {
+      const d = homeQuickDate.value;
+      if (!d) {
+        alert('열람할 일자를 선택해 주세요.');
+        return;
+      }
+      openBookViewer([d], d);
+    });
+  }
+
+  // 7. 빠른 기간 선택 열람
+  if (btnHomeViewRange) {
+    btnHomeViewRange.addEventListener('click', () => {
+      const start = homeQuickStart.value;
+      const end = homeQuickEnd.value;
+      if (!start || !end) {
+        alert('시작일과 종료일을 모두 선택해 주세요.');
+        return;
+      }
+      if (start > end) {
+        alert('시작일은 종료일보다 이전이어야 합니다.');
+        return;
+      }
+
+      // 지정 기간에 해당하는 모든 일자 추출
+      const rangeDates = [];
+      const s = new Date(start);
+      const e = new Date(end);
+      for (let cur = new Date(s); cur <= e; cur.setDate(cur.getDate() + 1)) {
+        rangeDates.push(cur.toISOString().split('T')[0]);
+      }
+
+      openBookViewer(rangeDates, rangeDates[0]);
+    });
+  }
+
+  // 8. 빠른 전체 기록 열람 (원클릭)
+  if (btnHomeViewAll) {
+    btnHomeViewAll.addEventListener('click', () => {
+      openBookViewer();
+    });
+  }
+
+  // 초기 시작: 홈 포털 대시보드 화면을 기본으로 표시하고 최신 데이터 갱신
   const todayStr = new Date().toISOString().split('T')[0];
   recordDateInput.value = todayStr;
-  loadRecord(todayStr);
+  loadRecord(todayStr); // 오늘 데이터 백그라운드 선로드
+  showHomeScreen();     // 홈 화면 진입
 });

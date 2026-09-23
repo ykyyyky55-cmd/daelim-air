@@ -13,15 +13,162 @@
 </head>
 <body>
 
-  <!-- 상단 컨트롤 헤더 바 -->
-  <header class="app-header">
-    <div class="header-inner">
-      <div class="title-area">
-        <h1>대기배출시설 및 방지시설 운영기록부</h1>
-        <span id="saveStatus" class="status-badge status-saved">저장됨</span>
-        <span id="cloudStatus" class="status-badge" style="background:#0284c7; color:#fff;" title="로컬 및 원격 클라우드 실시간 동기화 상태">☁️ 클라우드 동기화 완료</span>
-        <span id="supabaseStatus" class="status-badge" style="background:#10b981; color:#fff; cursor:pointer;" title="Supabase 데이터베이스 연동 상태 (클릭 시 설정)">⚡ Supabase 연동됨</span>
+  <!-- ============================================================ -->
+  <!-- 홈 화면 포털 대시보드 (Home Portal Dashboard) -->
+  <!-- ============================================================ -->
+  <main id="homeScreen" class="home-portal-container">
+    <header class="home-portal-header">
+      <div class="portal-header-left">
+        <div class="company-badge">대림산업(주)</div>
+        <h1 class="portal-main-title">대기배출시설 및 방지시설 운영기록부 통합 관리 시스템</h1>
       </div>
+      <div class="portal-header-right">
+        <span id="homeSupabaseBadge" class="status-badge" style="background:#10b981; color:#fff; cursor:pointer;" title="Supabase 데이터베이스 연동 상태">⚡ Supabase 연동됨</span>
+        <button type="button" id="btnHomeOpenSupabaseModal" class="btn btn-default" style="font-size:0.85rem;">⚡ 클라우드 설정</button>
+      </div>
+    </header>
+
+    <div class="portal-content-body">
+      <!-- 상태 요약 대시보드 카드들 -->
+      <section class="portal-stat-grid">
+        <div class="stat-card">
+          <div class="stat-icon">📅</div>
+          <div class="stat-info">
+            <span class="stat-label">등록된 운영기록</span>
+            <strong id="statTotalCount" class="stat-value">28 일</strong>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🕒</div>
+          <div class="stat-info">
+            <span class="stat-label">최근 기록 일자</span>
+            <strong id="statLatestDate" class="stat-value">2026-09-23</strong>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🏭</div>
+          <div class="stat-info">
+            <span class="stat-label">배출구 및 방지시설</span>
+            <strong class="stat-value" style="font-size:1.05rem;">1~4번 혼합시설 (면제)</strong>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon">🔴</div>
+          <div class="stat-info">
+            <span class="stat-label">전자결재 직인</span>
+            <strong class="stat-value" style="font-size:1.05rem; color:#dc2626;">일자별 자동 날인</strong>
+          </div>
+        </div>
+      </section>
+
+      <!-- 핵심 서비스 바로가기 카드 3종 -->
+      <section class="portal-menu-grid">
+        <!-- 메뉴 1: 작성 및 편집 -->
+        <div class="portal-menu-card menu-card-editor">
+          <div class="menu-card-header">
+            <span class="menu-badge" style="background:#2563eb;">작성 / 수정</span>
+            <span class="menu-icon">✍️</span>
+          </div>
+          <h3>운영기록부 작성 및 편집</h3>
+          <p>특정 일자의 배출시설 가동시간, 김포시 월곶면 기상 연동, 환경기술인 의견을 작성하고 저장합니다.</p>
+          <div class="menu-card-action">
+            <button type="button" id="btnGoEditorToday" class="btn btn-primary btn-block">
+              ✍️ 운영기록부 작성 / 편집
+            </button>
+          </div>
+        </div>
+
+        <!-- 메뉴 2: 책 넘김 바인더 열람 -->
+        <div class="portal-menu-card menu-card-viewer">
+          <div class="menu-card-header">
+            <span class="menu-badge" style="background:#8b5cf6;">바인더 뷰어</span>
+            <span class="menu-icon">📖</span>
+          </div>
+          <h3>운영기록부 책 넘김 열람</h3>
+          <p>실제 서류철 바인더처럼 앞면과 뒷면(2면)을 좌우로 펼쳐서 페이지를 넘겨가며 실감나게 열람합니다.</p>
+          <div class="menu-card-action">
+            <button type="button" id="btnGoBookViewerAll" class="btn btn-default btn-block" style="border-color:#8b5cf6; color:#6d28d9; background:#f5f3ff; font-weight:700;">
+              📖 책 뷰어로 전체 열람
+            </button>
+          </div>
+        </div>
+
+        <!-- 메뉴 3: 일괄 검색 및 인쇄 -->
+        <div class="portal-menu-card menu-card-search">
+          <div class="menu-card-header">
+            <span class="menu-badge" style="background:#0284c7;">검색 / 인쇄</span>
+            <span class="menu-icon">📑</span>
+          </div>
+          <h3>일괄 검색 / 인쇄 / 생성</h3>
+          <p>월간, 주간, 일일 검색을 지원하며, 9월 기간 일괄 자동생성 및 표준 A4 연속 인쇄를 제공합니다.</p>
+          <div class="menu-card-action">
+            <button type="button" id="btnGoSearchModal" class="btn btn-default btn-block" style="border-color:#3b82f6; color:#1d4ed8; font-weight:700;">
+              📑 일괄 검색 및 인쇄 창
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 일자선택 / 기간선택 / 전체선택 열람 컨트롤 패널 -->
+      <section class="portal-quick-panel">
+        <div class="quick-panel-title">
+          <span>📚</span> <strong>운영기록부 빠른 책 뷰어 열람 (일자 / 기간 / 전체)</strong>
+        </div>
+        <div class="quick-panel-grid">
+          <!-- ① 일자선택 열람 -->
+          <div class="quick-box">
+            <h4>1️⃣ 특정 일자 열람</h4>
+            <p>열람을 원하는 단일 일자를 선택합니다.</p>
+            <div class="quick-controls">
+              <input type="date" id="homeQuickDate" class="form-input" style="padding:6px 10px;">
+              <button type="button" id="btnHomeViewDate" class="btn btn-primary" style="padding:6px 12px; font-weight:600;">📖 선택일자 열람</button>
+            </div>
+          </div>
+
+          <!-- ② 기간선택 열람 -->
+          <div class="quick-box">
+            <h4>2️⃣ 기간 범위 열람</h4>
+            <p>시작일과 종료일을 지정하여 연속 열람합니다.</p>
+            <div class="quick-controls">
+              <input type="date" id="homeQuickStart" class="form-input" value="2026-09-01" style="padding:6px 6px; width:125px;">
+              <span>~</span>
+              <input type="date" id="homeQuickEnd" class="form-input" value="2026-09-22" style="padding:6px 6px; width:125px;">
+              <button type="button" id="btnHomeViewRange" class="btn btn-weather" style="padding:6px 12px; font-weight:600;">📖 기간 열람</button>
+            </div>
+          </div>
+
+          <!-- ③ 전체선택 열람 -->
+          <div class="quick-box">
+            <h4>3️⃣ 전체 기록 열람</h4>
+            <p>저장된 모든 운영기록을 순서대로 바인딩합니다.</p>
+            <div class="quick-controls">
+              <button type="button" id="btnHomeViewAll" class="btn btn-success" style="width:100%; font-weight:700; padding:8px 12px;">
+                📖 전체 기록 바인더 열람 (원클릭)
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- ============================================================ -->
+  <!-- 단일 작성 / 편집기 화면 (Editor Screen) -->
+  <!-- ============================================================ -->
+  <div id="editorScreen" style="display: none;">
+    <!-- 상단 컨트롤 헤더 바 -->
+    <header class="app-header">
+      <div class="header-inner">
+        <div class="title-area">
+          <!-- 홈 화면 뒤로가기 버튼 -->
+          <button type="button" id="btnBackToHome" class="btn btn-default btn-back-home" title="홈 포털 대시보드로 돌아가기">
+            🏠 홈으로
+          </button>
+          <h1>대기배출시설 및 방지시설 운영기록부</h1>
+          <span id="saveStatus" class="status-badge status-saved">저장됨</span>
+          <span id="cloudStatus" class="status-badge" style="background:#0284c7; color:#fff;" title="로컬 및 원격 클라우드 실시간 동기화 상태">☁️ 클라우드 동기화 완료</span>
+          <span id="supabaseStatus" class="status-badge" style="background:#10b981; color:#fff; cursor:pointer;" title="Supabase 데이터베이스 연동 상태 (클릭 시 설정)">⚡ Supabase 연동됨</span>
+        </div>
 
       <div class="controls-area">
         <!-- 날짜 이동 및 선택 컨트롤 -->
@@ -396,6 +543,7 @@
     </article>
 
   </main>
+  </div> <!-- /#editorScreen -->
 
   <!-- 전자결재 서명 및 도장 날인 모달 (부서장 및 환경기술인 전용) -->
   <div id="signModal" class="modal-overlay no-print" style="display: none;">
@@ -613,13 +761,17 @@
     <!-- 뷰어 상단 툴바 -->
     <div class="book-modal-toolbar">
       <div class="book-toolbar-left">
+        <!-- 홈으로 뒤로가기 버튼 -->
+        <button type="button" id="btnBookBackHome" class="btn btn-default" style="font-size: 0.85rem; background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.3);" title="홈 포털 대시보드로 돌아가기">
+          🏠 홈으로
+        </button>
         <span class="book-toolbar-title">📖 운영기록부 책 넘김 바인더</span>
         <span id="bookPageIndicator" class="book-page-badge">1 / 1</span>
       </div>
       <div class="book-toolbar-center">
-        <button type="button" id="btnBookPrevTop" class="btn btn-default book-nav-btn" title="이전 날짜 (단축키: ←)">◀ 이전 일자</button>
+        <button type="button" id="btnBookPrevTop" class="btn btn-default book-nav-btn" title="이전 일자/페이지 (단축키: ←, PageUp)">◀ 이전 페이지</button>
         <select id="bookDateSelect" class="form-input book-date-select" title="조회할 일자 선택"></select>
-        <button type="button" id="btnBookNextTop" class="btn btn-default book-nav-btn" title="다음 날짜 (단축키: →)">다음 일자 ▶</button>
+        <button type="button" id="btnBookNextTop" class="btn btn-default book-nav-btn" title="다음 일자/페이지 (단축키: →, PageDown)">다음 페이지 ▶</button>
       </div>
       <div class="book-toolbar-right">
         <button type="button" id="btnBookPrintCurrent" class="btn btn-success" style="font-size: 0.85rem;" title="현재 보고 있는 일자 인쇄">🖨️ 현재 일자 인쇄</button>
@@ -630,8 +782,8 @@
 
     <!-- 책 본체 스테이지 영역 -->
     <div class="book-stage">
-      <!-- 좌측 플로팅 넘김 버튼 -->
-      <button type="button" id="btnBookPrevSide" class="book-floating-arrow book-floating-prev" title="이전 날짜 (단축키: ←)">❮</button>
+      <!-- 좌측 플로팅 넘김 버튼 (이전 페이지) -->
+      <button type="button" id="btnBookPrevSide" class="book-floating-arrow book-floating-prev" title="이전 페이지 (단축키: ←, PageUp)">❮</button>
 
       <!-- 양면 펼침 바인더 본체 -->
       <div id="bookSpread" class="book-binder-spread">
@@ -656,13 +808,22 @@
         </div>
       </div>
 
-      <!-- 우측 플로팅 넘김 버튼 -->
-      <button type="button" id="btnBookNextSide" class="book-floating-arrow book-floating-next" title="다음 날짜 (단축키: →)">❯</button>
+      <!-- 우측 플로팅 넘김 버튼 (다음 페이지) -->
+      <button type="button" id="btnBookNextSide" class="book-floating-arrow book-floating-next" title="다음 페이지 (단축키: →, PageDown)">❯</button>
     </div>
 
-    <!-- 하단 단축키 가이드 팁 -->
-    <div class="book-footer-tip">
-      💡 키보드 좌우 방향키(<strong>←</strong>, <strong>→</strong>)로 책장을 넘길 수 있습니다. (<strong>ESC</strong>: 바인더 닫기)
+    <!-- 하단 페이지 이동 컨트롤 및 단축키 가이드 바 -->
+    <div class="book-footer-bar">
+      <button type="button" id="btnBookPrevBottom" class="btn btn-default" style="font-size:0.8rem; padding:3px 10px; background:rgba(255,255,255,0.1); color:#fff; border-color:rgba(255,255,255,0.2);">
+        ◀ 이전 페이지
+      </button>
+      <span id="bookBottomIndicator" style="color: #38bdf8; font-weight: 700; font-size: 0.88rem;">1 / 1</span>
+      <button type="button" id="btnBookNextBottom" class="btn btn-default" style="font-size:0.8rem; padding:3px 10px; background:rgba(255,255,255,0.1); color:#fff; border-color:rgba(255,255,255,0.2);">
+        다음 페이지 ▶
+      </button>
+      <span class="book-footer-shortcut-hint" style="margin-left: 20px; color: #94a3b8; font-size: 0.8rem;">
+        💡 키보드 좌우 방향키(<strong>←</strong>, <strong>→</strong>) 또는 <strong>PageUp</strong> / <strong>PageDown</strong>으로 페이지를 넘길 수 있습니다. (<strong>ESC</strong>: 닫기)
+      </span>
     </div>
   </div>
 
