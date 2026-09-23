@@ -839,3 +839,105 @@ body {
   box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 
+/* ============================================================
+   월간/주간/일일 검색 탭 및 결과 테이블 스타일
+   ============================================================ */
+.search-tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 2px solid #e2e8f0;
+  margin-bottom: 12px;
+}
+.tab-btn {
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #64748b;
+  font-size: 0.88rem;
+  transition: all 0.2s;
+}
+.tab-btn:hover {
+  color: #1e293b;
+}
+.tab-btn.active {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+}
+.search-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 6px 0;
+}
+.search-result-table th, .search-result-table td {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 8px 6px;
+}
+.search-result-table tbody tr:hover {
+  background: #f8fafc;
+}
+.badge-running { background: #dcfce7; color: #15803d; padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 0.8rem; }
+.badge-idle { background: #ffedd5; color: #c2410c; padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 0.8rem; }
+.badge-holiday { background: #ede9fe; color: #6d28d9; padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 0.8rem; }
+
+/* 일괄 열람 상단 배너 */
+.batch-view-banner {
+  background: #1e293b;
+  color: #ffffff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  margin: 15px auto 0;
+  max-width: 1720px;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+}
+.batch-banner-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.batch-date-separator {
+  width: 100%;
+  max-width: 1720px;
+  text-align: center;
+  padding: 15px 0 5px;
+  font-weight: 700;
+  color: #475569;
+  font-size: 1.1rem;
+  border-bottom: 2px dashed #cbd5e1;
+  margin-top: 30px;
+}
+
+/* 다중 일자 인쇄 페이지 분할 규격 */
+@media print {
+  body.printing-batch .workspace,
+  body.printing-batch .app-header,
+  body.printing-batch .modal-overlay,
+  body.printing-batch .batch-view-banner,
+  body.printing-batch .no-print {
+    display: none !important;
+  }
+  body.printing-batch #batchPrintContainer {
+    display: block !important;
+  }
+  .batch-print-page {
+    page-break-after: always !important;
+    break-after: page !important;
+    margin: 0 !important;
+    padding: 10mm !important;
+    box-shadow: none !important;
+    border: none !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    box-sizing: border-box !important;
+    background: #ffffff !important;
+  }
+}
+
+

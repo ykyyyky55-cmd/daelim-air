@@ -1586,6 +1586,772 @@ document.addEventListener('DOMContentLoaded', () => {
   // 초기 Supabase 상태 표시 갱신
   updateSupabaseStatusBadge();
 
+  // ============================================================
+  // 월간 / 주간 / 일일 검색 및 일괄 열람 / 인쇄 모듈
+  // ============================================================
+  let currentSearchResults = [];
+
+  // 검색 모달 열기/닫기
+  const btnOpenSearchModal = document.getElementById('btnOpenSearchModal');
+  const batchSearchModal = document.getElementById('batchSearchModal');
+  const btnCloseSearchModal = document.getElementById('btnCloseSearchModal');
+  const btnCloseSearchModalFooter = document.getElementById('btnCloseSearchModalFooter');
+
+  function openSearchModal() {
+    if (batchSearchModal) {
+      batchSearchModal.style.display = 'flex';
+      executeMonthlySearch();
+    }
+  }
+
+  function closeSearchModal() {
+    if (batchSearchModal) {
+      batchSearchModal.style.display = 'none';
+    }
+  }
+
+  if (btnOpenSearchModal) btnOpenSearchModal.addEventListener('click', openSearchModal);
+  if (btnCloseSearchModal) btnCloseSearchModal.addEventListener('click', closeSearchModal);
+  if (btnCloseSearchModalFooter) btnCloseSearchModalFooter.addEventListener('click', closeSearchModal);
+  if (batchSearchModal) {
+    batchSearchModal.addEventListener('click', (e) => {
+      if (e.target === batchSearchModal) closeSearchModal();
+    });
+  }
+
+  // 탭 전환
+  const tabButtons = document.querySelectorAll('.search-tabs .tab-btn');
+  const tabPanels = {
+    monthly: document.getElementById('tabContentMonthly'),
+    weekly: document.getElementById('tabContentWeekly'),
+    daily: document.getElementById('tabContentDaily'),
+    batch_create: document.getElementById('tabContentBatchCreate')
+  };
+
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const targetTab = btn.dataset.tab;
+      Object.keys(tabPanels).forEach(key => {
+        if (tabPanels[key]) {
+          tabPanels[key].style.display = (key === targetTab) ? 'block' : 'none';
+        }
+      });
+    });
+  });
+
+  // 모든 기록 불러오기 (Supabase 우선, 로컬/서버 병합)
+  async function fetchAllAvailableRecords() {
+    const recordsMap = new Map();
+
+    // 1. Supabase에서 전체 조회
+    if (window.SupabaseService && window.SupabaseService.isSupabaseConfigured()) {
+      const sb = window.SupabaseService.getSupabase();
+      if (sb) {
+        try {
+          const { data, error } = await sb
+            .from('air_operation_records')
+            .select('*')
+            .order('record_date', { ascending: true });
+          if (!error && data) {
+            data.forEach(item => {
+              recordsMap.set(item.record_date, {
+                date: item.record_date,
+                status: item.status || 'NORMAL',
+                ...item.record_data
+              });
+            });
+          }
+        } catch (e) {
+          console.warn('[Supabase] 전체 목록 로드 예외:', e);
+        }
+      }
+    }
+
+    // 2. 로컬 백엔드 서버에서 전체 조회
+    try {
+      const res = await fetch('/api/records-list');
+      if (res.ok) {
+        const resJson = await res.json();
+        if (resJson.success && resJson.data) {
+          resJson.data.forEach(item => {
+            if (!recordsMap.has(item.date)) {
+              recordsMap.set(item.date, item);
+            }
+          });
+        }
+      }
+    } catch (e) {}
+
+    // 3. 브라우저 localStorage 캐시 병합
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('daelim_air_record_')) {
+          const dateStr = key.replace('daelim_air_record_', '');
+          if (!recordsMap.has(dateStr)) {
+            const parsed = JSON.parse(localStorage.getItem(key));
+            recordsMap.set(dateStr, parsed);
+          }
+        }
+      }
+    } catch (e) {}
+
+    return Array.from(recordsMap.values()).sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  // 검색 결과 테이블 렌더링
+  const searchResultTableBody = document.getElementById('searchResultTableBody');
+  const searchResultSummary = document.getElementById('searchResultSummary');
+  const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+
+  function renderSearchResults(records) {
+    currentSearchResults = records;
+    if (!searchResultTableBody) return;
+
+    if (!records || records.length === 0) {
+      searchResultTableBody.innerHTML = `<tr><td colspan="7" style="padding: 24px; color: #94a3b8;">해당 기간에 등록된 운영기록이 없습니다.</td></tr>`;
+      if (searchResultSummary) searchResultSummary.textContent = '(0건 선택됨)';
+      return;
+    }
+
+    const dayKorean = ['일', '월', '화', '수', '목', '금', '토'];
+
+    searchResultTableBody.innerHTML = records.map(r => {
+      const d = new Date(r.date + 'T00:00:00');
+      const dayName = dayKorean[d.getDay()];
+      const isWeekend = (d.getDay() === 0 || d.getDay() === 6);
+
+      let statusBadge = '<span class="badge-running">정상가동</span>';
+      if (r.status === 'HOLIDAY' || r.isHoliday) {
+        statusBadge = `<span class="badge-holiday">${r.holidayReason || '휴무'}</span>`;
+      } else if (r.status === 'IDLE' || (r.exhaustList && r.exhaustList.every(e => e.note === '미가동'))) {
+        statusBadge = '<span class="badge-idle">미가동</span>';
+      }
+
+      const weatherStr = r.weatherInfo ? `${r.weatherInfo.weather || '-'} (${r.weatherInfo.temp || '-'})` : '-';
+      const reasonStr = r.engineerOpinion || (r.isHoliday ? '휴무' : '미가동');
+
+      return `
+        <tr>
+          <td><input type="checkbox" class="batch-row-checkbox" data-date="${r.date}" checked></td>
+          <td style="font-weight: 600;">${r.date}</td>
+          <td style="color: ${isWeekend ? '#dc2626' : '#1e293b'};">${dayName}요일</td>
+          <td>${statusBadge}</td>
+          <td>${weatherStr}</td>
+          <td style="text-align: left; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${reasonStr}">${reasonStr}</td>
+          <td>
+            <button type="button" class="btn btn-default" style="padding: 2px 8px; font-size: 0.78rem;" onclick="openSingleRecord('${r.date}')">
+              열기
+            </button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    bindCheckboxEvents();
+    updateSelectionSummary();
+  }
+
+  // 개별 일자 열기 전역 등록
+  window.openSingleRecord = function(dateStr) {
+    closeSearchModal();
+    exitBatchViewMode();
+    recordDateInput.value = dateStr;
+    loadRecord(dateStr);
+  };
+
+  // 체크박스 이벤트 바인딩
+  function bindCheckboxEvents() {
+    const rowCheckboxes = document.querySelectorAll('.batch-row-checkbox');
+    rowCheckboxes.forEach(cb => {
+      cb.addEventListener('change', updateSelectionSummary);
+    });
+
+    if (selectAllCheckbox) {
+      selectAllCheckbox.checked = true;
+      selectAllCheckbox.onchange = () => {
+        rowCheckboxes.forEach(cb => cb.checked = selectAllCheckbox.checked);
+        updateSelectionSummary();
+      };
+    }
+  }
+
+  function updateSelectionSummary() {
+    const selected = getSelectedDates();
+    if (searchResultSummary) {
+      searchResultSummary.textContent = `(총 ${currentSearchResults.length}건 중 ${selected.length}건 선택됨)`;
+    }
+  }
+
+  function getSelectedDates() {
+    const checkboxes = document.querySelectorAll('.batch-row-checkbox:checked');
+    return Array.from(checkboxes).map(cb => cb.dataset.date);
+  }
+
+  // 1. 월간 검색 실행
+  async function executeMonthlySearch() {
+    const monthInput = document.getElementById('searchMonthInput');
+    const targetMonth = monthInput ? monthInput.value : '2026-09';
+    searchResultTableBody.innerHTML = `<tr><td colspan="7" style="padding: 20px; color: #64748b;">⏳ ${targetMonth} 운영기록을 조회하는 중...</td></tr>`;
+
+    const allRecords = await fetchAllAvailableRecords();
+    const filtered = allRecords.filter(r => r.date.startsWith(targetMonth));
+    renderSearchResults(filtered);
+  }
+
+  const btnSearchMonthly = document.getElementById('btnSearchMonthly');
+  if (btnSearchMonthly) btnSearchMonthly.addEventListener('click', executeMonthlySearch);
+
+  // 2. 주간 검색 실행
+  async function executeWeeklySearch() {
+    const monthInput = document.getElementById('searchWeekMonthInput');
+    const weekSelect = document.getElementById('searchWeekSelect');
+    const targetMonth = monthInput ? monthInput.value : '2026-09';
+    const weekNum = parseInt(weekSelect ? weekSelect.value : '1', 10);
+
+    const weekRanges = {
+      1: [1, 6],
+      2: [7, 13],
+      3: [14, 20],
+      4: [21, 27],
+      5: [28, 31]
+    };
+
+    const [startDay, endDay] = weekRanges[weekNum] || [1, 31];
+    searchResultTableBody.innerHTML = `<tr><td colspan="7" style="padding: 20px; color: #64748b;">⏳ ${targetMonth} ${weekNum}주차 기록을 조회하는 중...</td></tr>`;
+
+    const allRecords = await fetchAllAvailableRecords();
+    const filtered = allRecords.filter(r => {
+      if (!r.date.startsWith(targetMonth)) return false;
+      const day = parseInt(r.date.split('-')[2], 10);
+      return day >= startDay && day <= endDay;
+    });
+
+    renderSearchResults(filtered);
+  }
+
+  const btnSearchWeekly = document.getElementById('btnSearchWeekly');
+  if (btnSearchWeekly) btnSearchWeekly.addEventListener('click', executeWeeklySearch);
+
+  // 3. 일일 검색 실행
+  const btnSearchDaily = document.getElementById('btnSearchDaily');
+  if (btnSearchDaily) {
+    btnSearchDaily.addEventListener('click', () => {
+      const dailyInput = document.getElementById('searchDailyInput');
+      const targetDate = dailyInput ? dailyInput.value : '';
+      if (targetDate) {
+        window.openSingleRecord(targetDate);
+      }
+    });
+  }
+
+  // 4. 기간 일괄 자동생성 실행
+  const btnExecuteBatchGenerate = document.getElementById('btnExecuteBatchGenerate');
+  const batchGenerateStatus = document.getElementById('batchGenerateStatus');
+
+  if (btnExecuteBatchGenerate) {
+    btnExecuteBatchGenerate.addEventListener('click', async () => {
+      const startInput = document.getElementById('batchStartInput');
+      const endInput = document.getElementById('batchEndInput');
+      const startDate = startInput.value;
+      const endDate = endInput.value;
+
+      if (!startDate || !endDate || startDate > endDate) {
+        alert('올바른 시작일과 종료일을 지정해주세요.');
+        return;
+      }
+
+      btnExecuteBatchGenerate.disabled = true;
+      btnExecuteBatchGenerate.textContent = '⏳ 일괄 생성 중...';
+      if (batchGenerateStatus) {
+        batchGenerateStatus.style.display = 'block';
+        batchGenerateStatus.textContent = `${startDate}부터 ${endDate}까지 일일 기록을 자동 생성하고 있습니다...`;
+      }
+
+      try {
+        let generatedCount = 0;
+        try {
+          const res = await fetch('/api/records/batch-generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ startDate, endDate })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            generatedCount = data.count || 0;
+          }
+        } catch (e) {}
+
+        const start = new Date(startDate + 'T00:00:00');
+        const end = new Date(endDate + 'T00:00:00');
+
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          const curDateStr = d.toISOString().split('T')[0];
+          const dayOfWeek = d.getDay();
+          const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+          const defaultNote = isWeekend ? '휴무' : '미가동';
+          const opinion = isWeekend ? '휴무로 인한 배출시설 미가동.' : '배출시설 미가동.';
+
+          const recordData = {
+            date: curDateStr,
+            formattedDate: getFormattedDateString(curDateStr),
+            isHoliday: isWeekend,
+            holidayReason: isWeekend ? (dayOfWeek === 6 ? '토요일(주말 휴무)' : '일요일(주말 휴무)') : '',
+            status: isWeekend ? 'HOLIDAY' : 'IDLE',
+            workHours: '09:00 ~ 18:00',
+            weatherInfo: { weather: '맑음', temp: '17 ~ 25℃' },
+            exhaustList: [
+              { id: '1', facility: '혼합시설', opTime: '-', note: defaultNote },
+              { id: '2', facility: '혼합시설', opTime: '-', note: defaultNote },
+              { id: '3', facility: '혼합시설', opTime: '-', note: defaultNote },
+              { id: '4', facility: '혼합시설', opTime: '-', note: defaultNote }
+            ],
+            preventionOperation: { exempt: true, text: '방지시설 면제', rows: [] },
+            preventionMaintenance: { exempt: false, rows: [] },
+            selfMeasurement: { measureDate: '', weather: '', temp: '', humidity: '', pressure: '', windDir: '', windSpeed: '', rows: [] },
+            fuelUsage: '-',
+            rawMaterialUsage: '-',
+            engineerOpinion: opinion,
+            etc: '-',
+            technician: { position: '부장', name: '윤 경 용' },
+            managerSign: '',
+            technicianSign: '',
+            updatedAt: new Date().toISOString()
+          };
+
+          localStorage.setItem('daelim_air_record_' + curDateStr, JSON.stringify(recordData));
+
+          if (window.SupabaseService && window.SupabaseService.isSupabaseConfigured()) {
+            await window.SupabaseService.saveSupabaseRecord(curDateStr, recordData, recordData.status);
+          }
+          generatedCount++;
+        }
+
+        if (batchGenerateStatus) {
+          batchGenerateStatus.textContent = `✅ ${startDate} ~ ${endDate} 총 ${generatedCount}건 일괄 생성 및 동기화 완료!`;
+        }
+        alert('일괄 생성이 완료되었습니다.');
+        const monthTab = document.querySelector('.search-tabs .tab-btn[data-tab="monthly"]');
+        if (monthTab) monthTab.click();
+        executeMonthlySearch();
+      } catch (err) {
+        console.error('일괄 생성 오류:', err);
+        alert('일괄 생성 중 오류가 발생했습니다: ' + err.message);
+      } finally {
+        btnExecuteBatchGenerate.disabled = false;
+        btnExecuteBatchGenerate.textContent = '⚡ 일괄 생성 실행';
+      }
+    });
+  }
+
+  // ============================================================
+  // 양식 렌더링 헬퍼 함수 (일괄 열람 및 인쇄 전용)
+  // ============================================================
+  function buildSheetsHtmlForRecord(record, isForPrint = false) {
+    const pageClass = isForPrint ? 'batch-print-page' : 'a4-sheet';
+    const dateFormatted = record.formattedDate || getFormattedDateString(record.date);
+    const weather = record.weatherInfo ? record.weatherInfo.weather || '맑음' : '맑음';
+    const temp = record.weatherInfo ? record.weatherInfo.temp || '15 ~ 25℃' : '15 ~ 25℃';
+
+    const chargeSignImg = record.chargeSign ? `<img src="${record.chargeSign}" class="electronic-sign-img" alt="담당">` : '';
+    const managerSignImg = record.managerSign ? `<img src="${record.managerSign}" class="electronic-sign-img" alt="부서장">` : '';
+    const techSignImg = record.technicianSign ? `<img src="${record.technicianSign}" class="electronic-sign-img" alt="환경기술인">` : '';
+
+    const exhaustRowsHtml = (record.exhaustList && record.exhaustList.length > 0 ? record.exhaustList : [
+      { id: '1', facility: '혼합시설', opTime: '-', note: record.isHoliday ? '휴무' : '미가동' },
+      { id: '2', facility: '혼합시설', opTime: '-', note: record.isHoliday ? '휴무' : '미가동' },
+      { id: '3', facility: '혼합시설', opTime: '-', note: record.isHoliday ? '휴무' : '미가동' },
+      { id: '4', facility: '혼합시설', opTime: '-', note: record.isHoliday ? '휴무' : '미가동' }
+    ]).map(e => `
+      <tr>
+        <td style="font-weight: 600;">${e.id}</td>
+        <td>${e.facility || '혼합시설'}</td>
+        <td>${e.opTime || '-'}</td>
+        <td style="font-weight: 600;">${e.note || '-'}</td>
+      </tr>
+    `).join('');
+
+    const isExempt = record.preventionOperation ? (record.preventionOperation.exempt !== undefined ? record.preventionOperation.exempt : true) : true;
+    let preventionHtml = '';
+    if (isExempt) {
+      preventionHtml = `
+        <tr class="exempt-row">
+          <td colspan="7" style="padding: 16px; font-weight: 600; color: #475569; background-color: #f8fafc;">
+            ※ 방지시설 설치 면제 사업장 (기록 생략)
+          </td>
+        </tr>
+      `;
+    } else {
+      const pRows = record.preventionOperation && record.preventionOperation.rows ? record.preventionOperation.rows : [];
+      preventionHtml = pRows.map(r => `
+        <tr>
+          <td>${r.exhaustNo || '-'}</td>
+          <td>${r.facilityName || '-'}</td>
+          <td>${r.hours || '-'}</td>
+          <td>${r.flow || '-'}</td>
+          <td>${r.efficiency || '-'}</td>
+          <td>${r.chemical || '-'}</td>
+          <td>${r.usage || '-'}</td>
+        </tr>
+      `).join('');
+    }
+
+    const frontHtml = `
+      <article class="${pageClass}">
+        <div class="sheet-badge">양식 1 : 배출시설 운영기록부 (앞면) - ${record.date}</div>
+        <div class="form-title-row">
+          <div class="form-title">대기배출시설 및 방지시설 운영기록부</div>
+          <table class="approval-table">
+            <tr>
+              <th rowspan="2" class="approval-header"><div class="vertical-text"><span>결</span><span>재</span></div></th>
+              <th class="approval-role">담당</th>
+              <th class="approval-role">부서장</th>
+            </tr>
+            <tr>
+              <td class="approval-sign">${chargeSignImg}</td>
+              <td class="approval-sign">${managerSignImg}</td>
+            </tr>
+          </table>
+        </div>
+        <div class="info-box-table">
+          <div class="info-date-cell">${dateFormatted}</div>
+          <div class="info-weather-cell">
+            <span>날씨 : ${weather}</span>
+            <span style="margin-left: 15px;">온도 : ${temp}</span>
+          </div>
+        </div>
+        <div class="section-title"><span>1. 배출구별 주요 배출시설 및 방지시설 가동(조업)시간</span></div>
+        <table class="sheet-table">
+          <thead>
+            <tr>
+              <th style="width: 14%;">배출구</th>
+              <th style="width: 36%;">배출시설명</th>
+              <th style="width: 28%;">가동(조업)시간</th>
+              <th style="width: 22%;">비고</th>
+            </tr>
+          </thead>
+          <tbody>${exhaustRowsHtml}</tbody>
+        </table>
+        <div class="section-title" style="margin-top: 15px;"><span>2. 방지시설 운전사항 및 보수사항</span></div>
+        <table class="sheet-table">
+          <thead>
+            <tr>
+              <th rowspan="2" style="width: 10%;">배출구</th>
+              <th rowspan="2" style="width: 20%;">방지시설명</th>
+              <th colspan="2">처리용량</th>
+              <th rowspan="2" style="width: 15%;">처리효율</th>
+              <th colspan="2">약품투입사항</th>
+            </tr>
+            <tr>
+              <th style="width: 15%;">가동시간</th>
+              <th style="width: 15%;">시간당풍량</th>
+              <th style="width: 15%;">약품명</th>
+              <th style="width: 10%;">사용량</th>
+            </tr>
+          </thead>
+          <tbody>${preventionHtml}</tbody>
+        </table>
+      </article>
+    `;
+
+    const backHtml = `
+      <article class="${pageClass}">
+        <div class="sheet-badge">양식 2 : 자가측정 및 원료/연료 운영기록부 (뒷면) - ${record.date}</div>
+        <div class="section-title"><span>3. 자가측정사항</span></div>
+        <table class="sheet-table" style="margin-bottom: 12px;">
+          <thead>
+            <tr>
+              <th style="width: 12%;">측정일자</th>
+              <th style="width: 16%;">기상</th>
+              <th style="width: 14%;">기온(℃)</th>
+              <th style="width: 14%;">습도(%)</th>
+              <th style="width: 14%;">기압(mmHg)</th>
+              <th style="width: 14%;">풍향</th>
+              <th style="width: 16%;">풍속(m/s)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>${record.selfMeasurement ? record.selfMeasurement.measureDate || '-' : '-'}</td>
+              <td>${record.selfMeasurement ? record.selfMeasurement.weather || '-' : '-'}</td>
+              <td>${record.selfMeasurement ? record.selfMeasurement.temp || '-' : '-'}</td>
+              <td>${record.selfMeasurement ? record.selfMeasurement.humidity || '-' : '-'}</td>
+              <td>${record.selfMeasurement ? record.selfMeasurement.pressure || '-' : '-'}</td>
+              <td>${record.selfMeasurement ? record.selfMeasurement.windDir || '-' : '-'}</td>
+              <td>${record.selfMeasurement ? record.selfMeasurement.windSpeed || '-' : '-'}</td>
+            </tr>
+          </tbody>
+        </table>
+        <table class="sheet-table">
+          <thead>
+            <tr>
+              <th style="width: 10%;">배출구</th>
+              <th style="width: 18%;">배출시설명</th>
+              <th style="width: 14%;">오염물질명</th>
+              <th style="width: 14%;">배출농도</th>
+              <th style="width: 14%;">일일유량</th>
+              <th style="width: 14%;">배출량</th>
+              <th style="width: 16%;">측정방법</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${(record.selfMeasurement && record.selfMeasurement.rows && record.selfMeasurement.rows.length > 0 ? record.selfMeasurement.rows : [{}]).map(r => `
+              <tr>
+                <td>${r.exhaustNo || '-'}</td>
+                <td>${r.facilityName || '-'}</td>
+                <td>${r.item || '-'}</td>
+                <td>${r.density || '-'}</td>
+                <td>${r.dailyFlow || '-'}</td>
+                <td>${r.dailyEmission || '-'}</td>
+                <td>${r.method || '-'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div class="section-title" style="margin-top: 15px;"><span>4. 원료 및 연료 사용량</span></div>
+        <table class="sheet-table">
+          <thead>
+            <tr>
+              <th style="width: 50%;">연료명 및 사용량</th>
+              <th style="width: 50%;">원료명 및 사용량</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding: 10px;">${record.fuelUsage || '-'}</td>
+              <td style="padding: 10px;">${record.rawMaterialUsage || '-'}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="section-title" style="margin-top: 15px;"><span>5. 환경기술인 의견 및 특이사항</span></div>
+        <div class="info-box-table" style="min-height: 50px; padding: 10px; font-size: 0.9rem;">
+          ${record.engineerOpinion || '특이사항 없음. 정상 가동.'}
+        </div>
+        <div class="technician-box" style="margin-top: 15px;">
+          <div style="font-weight: 600;">환경기술인 : 부장 윤 경 용</div>
+          <div class="technician-sign-cell">${techSignImg}</div>
+        </div>
+      </article>
+    `;
+
+    return frontHtml + backHtml;
+  }
+
+  // ============================================================
+  // 일괄 열람 (Batch View) 실행
+  // ============================================================
+  const batchViewBanner = document.getElementById('batchViewBanner');
+  const batchViewContainer = document.getElementById('batchViewContainer');
+  const batchViewCount = document.getElementById('batchViewCount');
+  const singleWorkspace = document.getElementById('singleWorkspace');
+  const btnExitBatchView = document.getElementById('btnExitBatchView');
+  const btnModalBatchView = document.getElementById('btnModalBatchView');
+  const btnBatchPrintCurrent = document.getElementById('btnBatchPrintCurrent');
+  const btnBatchExcelCurrent = document.getElementById('btnBatchExcelCurrent');
+
+  async function executeBatchView() {
+    const selectedDates = getSelectedDates();
+    if (selectedDates.length === 0) {
+      alert('일괄 열람할 일자를 1개 이상 선택해주세요.');
+      return;
+    }
+
+    closeSearchModal();
+    if (batchViewCount) batchViewCount.textContent = selectedDates.length;
+    if (batchViewContainer) batchViewContainer.innerHTML = '<div style="padding: 40px; font-size: 1.1rem; color: #475569;">⏳ 선택된 운영기록을 불러오는 중...</div>';
+    if (singleWorkspace) singleWorkspace.style.display = 'none';
+    if (batchViewBanner) batchViewBanner.style.display = 'block';
+    if (batchViewContainer) batchViewContainer.style.display = 'flex';
+
+    const allRecords = await fetchAllAvailableRecords();
+    const recordsMap = new Map(allRecords.map(r => [r.date, r]));
+
+    const htmlChunks = [];
+    for (const dateStr of selectedDates) {
+      const rec = recordsMap.get(dateStr) || { date: dateStr, formattedDate: getFormattedDateString(dateStr) };
+      htmlChunks.push(`
+        <div class="batch-date-separator">📅 ${rec.formattedDate || dateStr} 운영기록부</div>
+        <div style="display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; width: 100%;">
+          ${buildSheetsHtmlForRecord(rec, false)}
+        </div>
+      `);
+    }
+
+    if (batchViewContainer) {
+      batchViewContainer.innerHTML = htmlChunks.join('');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }
+
+  function exitBatchViewMode() {
+    if (batchViewBanner) batchViewBanner.style.display = 'none';
+    if (batchViewContainer) {
+      batchViewContainer.style.display = 'none';
+      batchViewContainer.innerHTML = '';
+    }
+    if (singleWorkspace) singleWorkspace.style.display = 'flex';
+  }
+
+  if (btnModalBatchView) btnModalBatchView.addEventListener('click', executeBatchView);
+  if (btnExitBatchView) btnExitBatchView.addEventListener('click', exitBatchViewMode);
+
+  // ============================================================
+  // 일괄 인쇄 (Batch Print - A4 다중 페이지) 실행
+  // ============================================================
+  const batchPrintContainer = document.getElementById('batchPrintContainer');
+  const btnModalBatchPrint = document.getElementById('btnModalBatchPrint');
+
+  async function executeBatchPrint() {
+    const selectedDates = getSelectedDates();
+    if (selectedDates.length === 0) {
+      alert('일괄 인쇄할 일자를 1개 이상 선택해주세요.');
+      return;
+    }
+
+    if (!batchPrintContainer) return;
+    batchPrintContainer.innerHTML = '';
+
+    const allRecords = await fetchAllAvailableRecords();
+    const recordsMap = new Map(allRecords.map(r => [r.date, r]));
+
+    const printSheetsHtml = selectedDates.map(dateStr => {
+      const rec = recordsMap.get(dateStr) || { date: dateStr, formattedDate: getFormattedDateString(dateStr) };
+      return buildSheetsHtmlForRecord(rec, true);
+    }).join('');
+
+    batchPrintContainer.innerHTML = printSheetsHtml;
+    document.body.classList.add('printing-batch');
+
+    setTimeout(() => {
+      window.print();
+    }, 250);
+
+    const cleanupPrint = () => {
+      document.body.classList.remove('printing-batch');
+      batchPrintContainer.innerHTML = '';
+      window.removeEventListener('afterprint', cleanupPrint);
+    };
+    window.addEventListener('afterprint', cleanupPrint);
+    setTimeout(cleanupPrint, 3000);
+  }
+
+  if (btnModalBatchPrint) btnModalBatchPrint.addEventListener('click', executeBatchPrint);
+  if (btnBatchPrintCurrent) btnBatchPrintCurrent.addEventListener('click', executeBatchPrint);
+
+  // ============================================================
+  // 일괄 엑셀 (Batch Excel - 다중 시트) 다운로드
+  // ============================================================
+  const btnModalBatchExcel = document.getElementById('btnModalBatchExcel');
+
+  async function executeBatchExcel() {
+    const selectedDates = getSelectedDates();
+    if (selectedDates.length === 0) {
+      alert('일괄 엑셀로 내보낼 일자를 1개 이상 선택해주세요.');
+      return;
+    }
+
+    if (!window.ExcelJS) {
+      alert('ExcelJS 라이브러리가 로드되지 않았습니다.');
+      return;
+    }
+
+    const allRecords = await fetchAllAvailableRecords();
+    const recordsMap = new Map(allRecords.map(r => [r.date, r]));
+
+    const workbook = new window.ExcelJS.Workbook();
+    workbook.creator = '대림 공조기록 시스템';
+
+    for (const dateStr of selectedDates) {
+      const data = recordsMap.get(dateStr) || { date: dateStr };
+      const sheetName = dateStr.replace(/-/g, '').slice(4);
+      const sheet = workbook.addWorksheet(sheetName);
+
+      sheet.pageSetup = { paperSize: 9, orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 2 };
+      sheet.columns = [
+        { width: 5 }, { width: 5 }, { width: 5 }, { width: 7 },
+        { width: 7 }, { width: 5 }, { width: 5 }, { width: 5 },
+        { width: 5 }, { width: 5 }, { width: 5 }, { width: 6 },
+        { width: 6 }, { width: 6 }, { width: 6 }, { width: 8 }
+      ];
+
+      sheet.mergeCells('A1:L3');
+      const titleCell = sheet.getCell('A1');
+      titleCell.value = '대기배출시설 및 방지시설 운영기록부';
+      titleCell.font = { name: '맑은 고딕', size: 14, bold: true };
+      titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+
+      sheet.mergeCells('M1:M3');
+      sheet.getCell('M1').value = '결\n재';
+      sheet.getCell('M1').alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+      sheet.getCell('N1').value = '담당';
+      sheet.getCell('O1').value = '부서장';
+      sheet.getCell('P1').value = '환경기술인';
+
+      sheet.mergeCells('A4:P4');
+      const weatherText = data.weatherInfo ? `${data.weatherInfo.weather || '맑음'} (기온: ${data.weatherInfo.temp || '-'})` : '맑음';
+      sheet.getCell('A4').value = `■ 작성일자: ${data.formattedDate || dateStr}   |   ■ 날씨: ${weatherText}`;
+      sheet.getCell('A4').font = { bold: true };
+
+      sheet.mergeCells('A6:P6'); sheet.getCell('A6').value = '1. 배출시설 운전사항'; sheet.getCell('A6').font = { bold: true };
+      sheet.mergeCells('A7:B7'); sheet.getCell('A7').value = '배출구';
+      sheet.mergeCells('C7:H7'); sheet.getCell('C7').value = '배출시설명';
+      sheet.mergeCells('I7:M7'); sheet.getCell('I7').value = '가동시간';
+      sheet.mergeCells('N7:P7'); sheet.getCell('N7').value = '비고';
+
+      let rIdx = 8;
+      (data.exhaustList || []).forEach(item => {
+        sheet.mergeCells(`A${rIdx}:B${rIdx}`); sheet.getCell(`A${rIdx}`).value = item.id + '번';
+        sheet.mergeCells(`C${rIdx}:H${rIdx}`); sheet.getCell(`C${rIdx}`).value = item.facility;
+        sheet.mergeCells(`I${rIdx}:M${rIdx}`); sheet.getCell(`I${rIdx}`).value = item.opTime;
+        sheet.mergeCells(`N${rIdx}:P${rIdx}`); sheet.getCell(`N${rIdx}`).value = item.note;
+        rIdx++;
+      });
+
+      rIdx++;
+      sheet.mergeCells(`A${rIdx}:P${rIdx}`); sheet.getCell(`A${rIdx}`).value = '2. 방지시설 운전사항 (면제)'; sheet.getCell(`A${rIdx}`).font = { bold: true };
+      rIdx++;
+      sheet.mergeCells(`A${rIdx}:P${rIdx}`); sheet.getCell(`A${rIdx}`).value = '방지시설 설치 면제 사업장 (기록 생략)';
+      sheet.getCell(`A${rIdx}`).alignment = { horizontal: 'center' };
+      rIdx += 2;
+
+      sheet.mergeCells('A${rIdx}:P${rIdx}'); sheet.getCell(`A${rIdx}`).value = '3. 환경기술인 의견 및 특이사항'; sheet.getCell(`A${rIdx}`).font = { bold: true };
+      rIdx++;
+      sheet.mergeCells(`A${rIdx}:P${rIdx}`); sheet.getCell(`A${rIdx}`).value = data.engineerOpinion || (data.isHoliday ? '휴무' : '미가동');
+
+      sheet.eachRow((row) => {
+        row.eachCell((cell) => {
+          if (!cell.font) cell.font = { name: '맑은 고딕', size: 9 };
+          if (!cell.alignment) cell.alignment = { vertical: 'middle', horizontal: 'center' };
+          cell.border = {
+            top: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+            left: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+            bottom: { style: 'thin', color: { argb: 'FFD1D5DB' } },
+            right: { style: 'thin', color: { argb: 'FFD1D5DB' } }
+          };
+        });
+      });
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const filename = `대기배출운영기록부_일괄_${selectedDates.length}건.xlsx`;
+    if (window.saveAs) {
+      window.saveAs(blob, filename);
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  }
+
+  if (btnModalBatchExcel) btnModalBatchExcel.addEventListener('click', executeBatchExcel);
+  if (btnBatchExcelCurrent) btnBatchExcelCurrent.addEventListener('click', executeBatchExcel);
+
   // 초기 로딩 (오늘 날짜)
   const todayStr = new Date().toISOString().split('T')[0];
   recordDateInput.value = todayStr;

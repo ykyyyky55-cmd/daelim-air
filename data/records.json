@@ -254,5 +254,1501 @@
       ]
     },
     "updatedAt": "2026-09-23T11:18:18.726Z"
+  },
+  "2026-09-01": {
+    "date": "2026-09-01",
+    "formattedDate": "2026년 9월 1일 화요일",
+    "isHoliday": false,
+    "holidayReason": "평일",
+    "status": "IDLE",
+    "workHours": "09:00 ~ 18:00",
+    "weatherInfo": {
+      "weather": "구름조금",
+      "temp": "17 ~ 25℃"
+    },
+    "exhaustList": [
+      {
+        "id": "1",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "2",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "3",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "4",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      }
+    ],
+    "preventionOperation": {
+      "exempt": true,
+      "text": "방지시설 면제",
+      "rows": []
+    },
+    "preventionMaintenance": {
+      "exempt": false,
+      "rows": []
+    },
+    "selfMeasurement": {
+      "measureDate": "",
+      "weather": "",
+      "temp": "",
+      "humidity": "",
+      "pressure": "",
+      "windDir": "",
+      "windSpeed": "",
+      "rows": []
+    },
+    "fuelUsage": "-",
+    "rawMaterialUsage": "-",
+    "engineerOpinion": "배출시설 미가동.",
+    "etc": "-",
+    "technician": {
+      "position": "부장",
+      "name": "윤 경 용"
+    },
+    "managerSign": "",
+    "technicianSign": "",
+    "updatedAt": "2026-09-23T12:08:54.324Z"
+  },
+  "2026-09-02": {
+    "date": "2026-09-02",
+    "formattedDate": "2026년 9월 2일 수요일",
+    "isHoliday": false,
+    "holidayReason": "평일",
+    "status": "IDLE",
+    "workHours": "09:00 ~ 18:00",
+    "weatherInfo": {
+      "weather": "맑음",
+      "temp": "18 ~ 26℃"
+    },
+    "exhaustList": [
+      {
+        "id": "1",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "2",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "3",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "4",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      }
+    ],
+    "preventionOperation": {
+      "exempt": true,
+      "text": "방지시설 면제",
+      "rows": []
+    },
+    "preventionMaintenance": {
+      "exempt": false,
+      "rows": []
+    },
+    "selfMeasurement": {
+      "measureDate": "",
+      "weather": "",
+      "temp": "",
+      "humidity": "",
+      "pressure": "",
+      "windDir": "",
+      "windSpeed": "",
+      "rows": []
+    },
+    "fuelUsage": "-",
+    "rawMaterialUsage": "-",
+    "engineerOpinion": "배출시설 미가동.",
+    "etc": "-",
+    "technician": {
+      "position": "부장",
+      "name": "윤 경 용"
+    },
+    "managerSign": "",
+    "technicianSign": "",
+    "updatedAt": "2026-09-23T12:08:54.325Z"
+  },
+  "2026-09-03": {
+    "date": "2026-09-03",
+    "formattedDate": "2026년 9월 3일 목요일",
+    "isHoliday": false,
+    "holidayReason": "평일",
+    "status": "IDLE",
+    "workHours": "09:00 ~ 18:00",
+    "weatherInfo": {
+      "weather": "맑음",
+      "temp": "19 ~ 27℃"
+    },
+    "exhaustList": [
+      {
+        "id": "1",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "2",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "3",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "4",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      }
+    ],
+    "preventionOperation": {
+      "exempt": true,
+      "text": "방지시설 면제",
+      "rows": []
+    },
+    "preventionMaintenance": {
+      "exempt": false,
+      "rows": []
+    },
+    "selfMeasurement": {
+      "measureDate": "",
+      "weather": "",
+      "temp": "",
+      "humidity": "",
+      "pressure": "",
+      "windDir": "",
+      "windSpeed": "",
+      "rows": []
+    },
+    "fuelUsage": "-",
+    "rawMaterialUsage": "-",
+    "engineerOpinion": "배출시설 미가동.",
+    "etc": "-",
+    "technician": {
+      "position": "부장",
+      "name": "윤 경 용"
+    },
+    "managerSign": "",
+    "technicianSign": "",
+    "updatedAt": "2026-09-23T12:08:54.325Z"
+  },
+  "2026-09-04": {
+    "date": "2026-09-04",
+    "formattedDate": "2026년 9월 4일 금요일",
+    "isHoliday": false,
+    "holidayReason": "평일",
+    "status": "IDLE",
+    "workHours": "09:00 ~ 18:00",
+    "weatherInfo": {
+      "weather": "흐림",
+      "temp": "16 ~ 28℃"
+    },
+    "exhaustList": [
+      {
+        "id": "1",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "2",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "3",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "4",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      }
+    ],
+    "preventionOperation": {
+      "exempt": true,
+      "text": "방지시설 면제",
+      "rows": []
+    },
+    "preventionMaintenance": {
+      "exempt": false,
+      "rows": []
+    },
+    "selfMeasurement": {
+      "measureDate": "",
+      "weather": "",
+      "temp": "",
+      "humidity": "",
+      "pressure": "",
+      "windDir": "",
+      "windSpeed": "",
+      "rows": []
+    },
+    "fuelUsage": "-",
+    "rawMaterialUsage": "-",
+    "engineerOpinion": "배출시설 미가동.",
+    "etc": "-",
+    "technician": {
+      "position": "부장",
+      "name": "윤 경 용"
+    },
+    "managerSign": "",
+    "technicianSign": "",
+    "updatedAt": "2026-09-23T12:08:54.325Z"
+  },
+  "2026-09-05": {
+    "date": "2026-09-05",
+    "formattedDate": "2026년 9월 5일 토요일",
+    "isHoliday": true,
+    "holidayReason": "토요일(주말 휴무)",
+    "status": "HOLIDAY",
+    "workHours": "09:00 ~ 18:00",
+    "weatherInfo": {
+      "weather": "비",
+      "temp": "17 ~ 24℃"
+    },
+    "exhaustList": [
+      {
+        "id": "1",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "휴무"
+      },
+      {
+        "id": "2",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "휴무"
+      },
+      {
+        "id": "3",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "휴무"
+      },
+      {
+        "id": "4",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "휴무"
+      }
+    ],
+    "preventionOperation": {
+      "exempt": true,
+      "text": "방지시설 면제",
+      "rows": []
+    },
+    "preventionMaintenance": {
+      "exempt": false,
+      "rows": []
+    },
+    "selfMeasurement": {
+      "measureDate": "",
+      "weather": "",
+      "temp": "",
+      "humidity": "",
+      "pressure": "",
+      "windDir": "",
+      "windSpeed": "",
+      "rows": []
+    },
+    "fuelUsage": "-",
+    "rawMaterialUsage": "-",
+    "engineerOpinion": "휴무로 인한 배출시설 미가동.",
+    "etc": "-",
+    "technician": {
+      "position": "부장",
+      "name": "윤 경 용"
+    },
+    "managerSign": "",
+    "technicianSign": "",
+    "updatedAt": "2026-09-23T12:08:54.325Z"
+  },
+  "2026-09-06": {
+    "date": "2026-09-06",
+    "formattedDate": "2026년 9월 6일 일요일",
+    "isHoliday": true,
+    "holidayReason": "일요일(주말 휴무)",
+    "status": "HOLIDAY",
+    "workHours": "09:00 ~ 18:00",
+    "weatherInfo": {
+      "weather": "맑음",
+      "temp": "18 ~ 25℃"
+    },
+    "exhaustList": [
+      {
+        "id": "1",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "휴무"
+      },
+      {
+        "id": "2",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "휴무"
+      },
+      {
+        "id": "3",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "휴무"
+      },
+      {
+        "id": "4",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "휴무"
+      }
+    ],
+    "preventionOperation": {
+      "exempt": true,
+      "text": "방지시설 면제",
+      "rows": []
+    },
+    "preventionMaintenance": {
+      "exempt": false,
+      "rows": []
+    },
+    "selfMeasurement": {
+      "measureDate": "",
+      "weather": "",
+      "temp": "",
+      "humidity": "",
+      "pressure": "",
+      "windDir": "",
+      "windSpeed": "",
+      "rows": []
+    },
+    "fuelUsage": "-",
+    "rawMaterialUsage": "-",
+    "engineerOpinion": "휴무로 인한 배출시설 미가동.",
+    "etc": "-",
+    "technician": {
+      "position": "부장",
+      "name": "윤 경 용"
+    },
+    "managerSign": "",
+    "technicianSign": "",
+    "updatedAt": "2026-09-23T12:08:54.325Z"
+  },
+  "2026-09-07": {
+    "date": "2026-09-07",
+    "formattedDate": "2026년 9월 7일 월요일",
+    "isHoliday": false,
+    "holidayReason": "평일",
+    "status": "IDLE",
+    "workHours": "09:00 ~ 18:00",
+    "weatherInfo": {
+      "weather": "맑음",
+      "temp": "19 ~ 26℃"
+    },
+    "exhaustList": [
+      {
+        "id": "1",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "2",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "3",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "4",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      }
+    ],
+    "preventionOperation": {
+      "exempt": true,
+      "text": "방지시설 면제",
+      "rows": []
+    },
+    "preventionMaintenance": {
+      "exempt": false,
+      "rows": []
+    },
+    "selfMeasurement": {
+      "measureDate": "",
+      "weather": "",
+      "temp": "",
+      "humidity": "",
+      "pressure": "",
+      "windDir": "",
+      "windSpeed": "",
+      "rows": []
+    },
+    "fuelUsage": "-",
+    "rawMaterialUsage": "-",
+    "engineerOpinion": "배출시설 미가동.",
+    "etc": "-",
+    "technician": {
+      "position": "부장",
+      "name": "윤 경 용"
+    },
+    "managerSign": "",
+    "technicianSign": "",
+    "updatedAt": "2026-09-23T12:08:54.325Z"
+  },
+  "2026-09-08": {
+    "date": "2026-09-08",
+    "formattedDate": "2026년 9월 8일 화요일",
+    "isHoliday": false,
+    "holidayReason": "평일",
+    "status": "IDLE",
+    "workHours": "09:00 ~ 18:00",
+    "weatherInfo": {
+      "weather": "구름조금",
+      "temp": "16 ~ 27℃"
+    },
+    "exhaustList": [
+      {
+        "id": "1",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "2",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "3",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "4",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      }
+    ],
+    "preventionOperation": {
+      "exempt": true,
+      "text": "방지시설 면제",
+      "rows": []
+    },
+    "preventionMaintenance": {
+      "exempt": false,
+      "rows": []
+    },
+    "selfMeasurement": {
+      "measureDate": "",
+      "weather": "",
+      "temp": "",
+      "humidity": "",
+      "pressure": "",
+      "windDir": "",
+      "windSpeed": "",
+      "rows": []
+    },
+    "fuelUsage": "-",
+    "rawMaterialUsage": "-",
+    "engineerOpinion": "배출시설 미가동.",
+    "etc": "-",
+    "technician": {
+      "position": "부장",
+      "name": "윤 경 용"
+    },
+    "managerSign": "",
+    "technicianSign": "",
+    "updatedAt": "2026-09-23T12:08:54.325Z"
+  },
+  "2026-09-09": {
+    "date": "2026-09-09",
+    "formattedDate": "2026년 9월 9일 수요일",
+    "isHoliday": false,
+    "holidayReason": "평일",
+    "status": "IDLE",
+    "workHours": "09:00 ~ 18:00",
+    "weatherInfo": {
+      "weather": "맑음",
+      "temp": "17 ~ 28℃"
+    },
+    "exhaustList": [
+      {
+        "id": "1",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "2",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "3",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "4",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      }
+    ],
+    "preventionOperation": {
+      "exempt": true,
+      "text": "방지시설 면제",
+      "rows": []
+    },
+    "preventionMaintenance": {
+      "exempt": false,
+      "rows": []
+    },
+    "selfMeasurement": {
+      "measureDate": "",
+      "weather": "",
+      "temp": "",
+      "humidity": "",
+      "pressure": "",
+      "windDir": "",
+      "windSpeed": "",
+      "rows": []
+    },
+    "fuelUsage": "-",
+    "rawMaterialUsage": "-",
+    "engineerOpinion": "배출시설 미가동.",
+    "etc": "-",
+    "technician": {
+      "position": "부장",
+      "name": "윤 경 용"
+    },
+    "managerSign": "",
+    "technicianSign": "",
+    "updatedAt": "2026-09-23T12:08:54.325Z"
+  },
+  "2026-09-10": {
+    "date": "2026-09-10",
+    "formattedDate": "2026년 9월 10일 목요일",
+    "isHoliday": false,
+    "holidayReason": "평일",
+    "status": "IDLE",
+    "workHours": "09:00 ~ 18:00",
+    "weatherInfo": {
+      "weather": "맑음",
+      "temp": "18 ~ 24℃"
+    },
+    "exhaustList": [
+      {
+        "id": "1",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "2",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "3",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "4",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      }
+    ],
+    "preventionOperation": {
+      "exempt": true,
+      "text": "방지시설 면제",
+      "rows": []
+    },
+    "preventionMaintenance": {
+      "exempt": false,
+      "rows": []
+    },
+    "selfMeasurement": {
+      "measureDate": "",
+      "weather": "",
+      "temp": "",
+      "humidity": "",
+      "pressure": "",
+      "windDir": "",
+      "windSpeed": "",
+      "rows": []
+    },
+    "fuelUsage": "-",
+    "rawMaterialUsage": "-",
+    "engineerOpinion": "배출시설 미가동.",
+    "etc": "-",
+    "technician": {
+      "position": "부장",
+      "name": "윤 경 용"
+    },
+    "managerSign": "",
+    "technicianSign": "",
+    "updatedAt": "2026-09-23T12:08:54.325Z"
+  },
+  "2026-09-11": {
+    "date": "2026-09-11",
+    "formattedDate": "2026년 9월 11일 금요일",
+    "isHoliday": false,
+    "holidayReason": "평일",
+    "status": "IDLE",
+    "workHours": "09:00 ~ 18:00",
+    "weatherInfo": {
+      "weather": "구름조금",
+      "temp": "19 ~ 25℃"
+    },
+    "exhaustList": [
+      {
+        "id": "1",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "2",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "3",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "4",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      }
+    ],
+    "preventionOperation": {
+      "exempt": true,
+      "text": "방지시설 면제",
+      "rows": []
+    },
+    "preventionMaintenance": {
+      "exempt": false,
+      "rows": []
+    },
+    "selfMeasurement": {
+      "measureDate": "",
+      "weather": "",
+      "temp": "",
+      "humidity": "",
+      "pressure": "",
+      "windDir": "",
+      "windSpeed": "",
+      "rows": []
+    },
+    "fuelUsage": "-",
+    "rawMaterialUsage": "-",
+    "engineerOpinion": "배출시설 미가동.",
+    "etc": "-",
+    "technician": {
+      "position": "부장",
+      "name": "윤 경 용"
+    },
+    "managerSign": "",
+    "technicianSign": "",
+    "updatedAt": "2026-09-23T12:08:54.325Z"
+  },
+  "2026-09-12": {
+    "date": "2026-09-12",
+    "formattedDate": "2026년 9월 12일 토요일",
+    "isHoliday": true,
+    "holidayReason": "토요일(주말 휴무)",
+    "status": "HOLIDAY",
+    "workHours": "09:00 ~ 18:00",
+    "weatherInfo": {
+      "weather": "맑음",
+      "temp": "16 ~ 26℃"
+    },
+    "exhaustList": [
+      {
+        "id": "1",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "휴무"
+      },
+      {
+        "id": "2",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "휴무"
+      },
+      {
+        "id": "3",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "휴무"
+      },
+      {
+        "id": "4",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "휴무"
+      }
+    ],
+    "preventionOperation": {
+      "exempt": true,
+      "text": "방지시설 면제",
+      "rows": []
+    },
+    "preventionMaintenance": {
+      "exempt": false,
+      "rows": []
+    },
+    "selfMeasurement": {
+      "measureDate": "",
+      "weather": "",
+      "temp": "",
+      "humidity": "",
+      "pressure": "",
+      "windDir": "",
+      "windSpeed": "",
+      "rows": []
+    },
+    "fuelUsage": "-",
+    "rawMaterialUsage": "-",
+    "engineerOpinion": "휴무로 인한 배출시설 미가동.",
+    "etc": "-",
+    "technician": {
+      "position": "부장",
+      "name": "윤 경 용"
+    },
+    "managerSign": "",
+    "technicianSign": "",
+    "updatedAt": "2026-09-23T12:08:54.325Z"
+  },
+  "2026-09-13": {
+    "date": "2026-09-13",
+    "formattedDate": "2026년 9월 13일 일요일",
+    "isHoliday": true,
+    "holidayReason": "일요일(주말 휴무)",
+    "status": "HOLIDAY",
+    "workHours": "09:00 ~ 18:00",
+    "weatherInfo": {
+      "weather": "맑음",
+      "temp": "17 ~ 27℃"
+    },
+    "exhaustList": [
+      {
+        "id": "1",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "휴무"
+      },
+      {
+        "id": "2",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "휴무"
+      },
+      {
+        "id": "3",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "휴무"
+      },
+      {
+        "id": "4",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "휴무"
+      }
+    ],
+    "preventionOperation": {
+      "exempt": true,
+      "text": "방지시설 면제",
+      "rows": []
+    },
+    "preventionMaintenance": {
+      "exempt": false,
+      "rows": []
+    },
+    "selfMeasurement": {
+      "measureDate": "",
+      "weather": "",
+      "temp": "",
+      "humidity": "",
+      "pressure": "",
+      "windDir": "",
+      "windSpeed": "",
+      "rows": []
+    },
+    "fuelUsage": "-",
+    "rawMaterialUsage": "-",
+    "engineerOpinion": "휴무로 인한 배출시설 미가동.",
+    "etc": "-",
+    "technician": {
+      "position": "부장",
+      "name": "윤 경 용"
+    },
+    "managerSign": "",
+    "technicianSign": "",
+    "updatedAt": "2026-09-23T12:08:54.325Z"
+  },
+  "2026-09-14": {
+    "date": "2026-09-14",
+    "formattedDate": "2026년 9월 14일 월요일",
+    "isHoliday": false,
+    "holidayReason": "평일",
+    "status": "IDLE",
+    "workHours": "09:00 ~ 18:00",
+    "weatherInfo": {
+      "weather": "흐림",
+      "temp": "18 ~ 28℃"
+    },
+    "exhaustList": [
+      {
+        "id": "1",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "2",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "3",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "4",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      }
+    ],
+    "preventionOperation": {
+      "exempt": true,
+      "text": "방지시설 면제",
+      "rows": []
+    },
+    "preventionMaintenance": {
+      "exempt": false,
+      "rows": []
+    },
+    "selfMeasurement": {
+      "measureDate": "",
+      "weather": "",
+      "temp": "",
+      "humidity": "",
+      "pressure": "",
+      "windDir": "",
+      "windSpeed": "",
+      "rows": []
+    },
+    "fuelUsage": "-",
+    "rawMaterialUsage": "-",
+    "engineerOpinion": "배출시설 미가동.",
+    "etc": "-",
+    "technician": {
+      "position": "부장",
+      "name": "윤 경 용"
+    },
+    "managerSign": "",
+    "technicianSign": "",
+    "updatedAt": "2026-09-23T12:08:54.325Z"
+  },
+  "2026-09-15": {
+    "date": "2026-09-15",
+    "formattedDate": "2026년 9월 15일 화요일",
+    "isHoliday": false,
+    "holidayReason": "평일",
+    "status": "IDLE",
+    "workHours": "09:00 ~ 18:00",
+    "weatherInfo": {
+      "weather": "비",
+      "temp": "19 ~ 24℃"
+    },
+    "exhaustList": [
+      {
+        "id": "1",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "2",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "3",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "4",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      }
+    ],
+    "preventionOperation": {
+      "exempt": true,
+      "text": "방지시설 면제",
+      "rows": []
+    },
+    "preventionMaintenance": {
+      "exempt": false,
+      "rows": []
+    },
+    "selfMeasurement": {
+      "measureDate": "",
+      "weather": "",
+      "temp": "",
+      "humidity": "",
+      "pressure": "",
+      "windDir": "",
+      "windSpeed": "",
+      "rows": []
+    },
+    "fuelUsage": "-",
+    "rawMaterialUsage": "-",
+    "engineerOpinion": "배출시설 미가동.",
+    "etc": "-",
+    "technician": {
+      "position": "부장",
+      "name": "윤 경 용"
+    },
+    "managerSign": "",
+    "technicianSign": "",
+    "updatedAt": "2026-09-23T12:08:54.325Z"
+  },
+  "2026-09-16": {
+    "date": "2026-09-16",
+    "formattedDate": "2026년 9월 16일 수요일",
+    "isHoliday": false,
+    "holidayReason": "평일",
+    "status": "IDLE",
+    "workHours": "09:00 ~ 18:00",
+    "weatherInfo": {
+      "weather": "맑음",
+      "temp": "16 ~ 25℃"
+    },
+    "exhaustList": [
+      {
+        "id": "1",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "2",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "3",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "4",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      }
+    ],
+    "preventionOperation": {
+      "exempt": true,
+      "text": "방지시설 면제",
+      "rows": []
+    },
+    "preventionMaintenance": {
+      "exempt": false,
+      "rows": []
+    },
+    "selfMeasurement": {
+      "measureDate": "",
+      "weather": "",
+      "temp": "",
+      "humidity": "",
+      "pressure": "",
+      "windDir": "",
+      "windSpeed": "",
+      "rows": []
+    },
+    "fuelUsage": "-",
+    "rawMaterialUsage": "-",
+    "engineerOpinion": "배출시설 미가동.",
+    "etc": "-",
+    "technician": {
+      "position": "부장",
+      "name": "윤 경 용"
+    },
+    "managerSign": "",
+    "technicianSign": "",
+    "updatedAt": "2026-09-23T12:08:54.325Z"
+  },
+  "2026-09-17": {
+    "date": "2026-09-17",
+    "formattedDate": "2026년 9월 17일 목요일",
+    "isHoliday": false,
+    "holidayReason": "평일",
+    "status": "IDLE",
+    "workHours": "09:00 ~ 18:00",
+    "weatherInfo": {
+      "weather": "맑음",
+      "temp": "17 ~ 26℃"
+    },
+    "exhaustList": [
+      {
+        "id": "1",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "2",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "3",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "4",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      }
+    ],
+    "preventionOperation": {
+      "exempt": true,
+      "text": "방지시설 면제",
+      "rows": []
+    },
+    "preventionMaintenance": {
+      "exempt": false,
+      "rows": []
+    },
+    "selfMeasurement": {
+      "measureDate": "",
+      "weather": "",
+      "temp": "",
+      "humidity": "",
+      "pressure": "",
+      "windDir": "",
+      "windSpeed": "",
+      "rows": []
+    },
+    "fuelUsage": "-",
+    "rawMaterialUsage": "-",
+    "engineerOpinion": "배출시설 미가동.",
+    "etc": "-",
+    "technician": {
+      "position": "부장",
+      "name": "윤 경 용"
+    },
+    "managerSign": "",
+    "technicianSign": "",
+    "updatedAt": "2026-09-23T12:08:54.325Z"
+  },
+  "2026-09-18": {
+    "date": "2026-09-18",
+    "formattedDate": "2026년 9월 18일 금요일",
+    "isHoliday": false,
+    "holidayReason": "평일",
+    "status": "IDLE",
+    "workHours": "09:00 ~ 18:00",
+    "weatherInfo": {
+      "weather": "구름조금",
+      "temp": "18 ~ 27℃"
+    },
+    "exhaustList": [
+      {
+        "id": "1",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "2",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "3",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "4",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      }
+    ],
+    "preventionOperation": {
+      "exempt": true,
+      "text": "방지시설 면제",
+      "rows": []
+    },
+    "preventionMaintenance": {
+      "exempt": false,
+      "rows": []
+    },
+    "selfMeasurement": {
+      "measureDate": "",
+      "weather": "",
+      "temp": "",
+      "humidity": "",
+      "pressure": "",
+      "windDir": "",
+      "windSpeed": "",
+      "rows": []
+    },
+    "fuelUsage": "-",
+    "rawMaterialUsage": "-",
+    "engineerOpinion": "배출시설 미가동.",
+    "etc": "-",
+    "technician": {
+      "position": "부장",
+      "name": "윤 경 용"
+    },
+    "managerSign": "",
+    "technicianSign": "",
+    "updatedAt": "2026-09-23T12:08:54.325Z"
+  },
+  "2026-09-19": {
+    "date": "2026-09-19",
+    "formattedDate": "2026년 9월 19일 토요일",
+    "isHoliday": true,
+    "holidayReason": "토요일(주말 휴무)",
+    "status": "HOLIDAY",
+    "workHours": "09:00 ~ 18:00",
+    "weatherInfo": {
+      "weather": "맑음",
+      "temp": "19 ~ 28℃"
+    },
+    "exhaustList": [
+      {
+        "id": "1",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "휴무"
+      },
+      {
+        "id": "2",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "휴무"
+      },
+      {
+        "id": "3",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "휴무"
+      },
+      {
+        "id": "4",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "휴무"
+      }
+    ],
+    "preventionOperation": {
+      "exempt": true,
+      "text": "방지시설 면제",
+      "rows": []
+    },
+    "preventionMaintenance": {
+      "exempt": false,
+      "rows": []
+    },
+    "selfMeasurement": {
+      "measureDate": "",
+      "weather": "",
+      "temp": "",
+      "humidity": "",
+      "pressure": "",
+      "windDir": "",
+      "windSpeed": "",
+      "rows": []
+    },
+    "fuelUsage": "-",
+    "rawMaterialUsage": "-",
+    "engineerOpinion": "휴무로 인한 배출시설 미가동.",
+    "etc": "-",
+    "technician": {
+      "position": "부장",
+      "name": "윤 경 용"
+    },
+    "managerSign": "",
+    "technicianSign": "",
+    "updatedAt": "2026-09-23T12:08:54.325Z"
+  },
+  "2026-09-20": {
+    "date": "2026-09-20",
+    "formattedDate": "2026년 9월 20일 일요일",
+    "isHoliday": true,
+    "holidayReason": "일요일(주말 휴무)",
+    "status": "HOLIDAY",
+    "workHours": "09:00 ~ 18:00",
+    "weatherInfo": {
+      "weather": "맑음",
+      "temp": "16 ~ 24℃"
+    },
+    "exhaustList": [
+      {
+        "id": "1",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "휴무"
+      },
+      {
+        "id": "2",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "휴무"
+      },
+      {
+        "id": "3",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "휴무"
+      },
+      {
+        "id": "4",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "휴무"
+      }
+    ],
+    "preventionOperation": {
+      "exempt": true,
+      "text": "방지시설 면제",
+      "rows": []
+    },
+    "preventionMaintenance": {
+      "exempt": false,
+      "rows": []
+    },
+    "selfMeasurement": {
+      "measureDate": "",
+      "weather": "",
+      "temp": "",
+      "humidity": "",
+      "pressure": "",
+      "windDir": "",
+      "windSpeed": "",
+      "rows": []
+    },
+    "fuelUsage": "-",
+    "rawMaterialUsage": "-",
+    "engineerOpinion": "휴무로 인한 배출시설 미가동.",
+    "etc": "-",
+    "technician": {
+      "position": "부장",
+      "name": "윤 경 용"
+    },
+    "managerSign": "",
+    "technicianSign": "",
+    "updatedAt": "2026-09-23T12:08:54.325Z"
+  },
+  "2026-09-21": {
+    "date": "2026-09-21",
+    "formattedDate": "2026년 9월 21일 월요일",
+    "isHoliday": false,
+    "holidayReason": "평일",
+    "status": "IDLE",
+    "workHours": "09:00 ~ 18:00",
+    "weatherInfo": {
+      "weather": "구름조금",
+      "temp": "17 ~ 25℃"
+    },
+    "exhaustList": [
+      {
+        "id": "1",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "2",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "3",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "4",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      }
+    ],
+    "preventionOperation": {
+      "exempt": true,
+      "text": "방지시설 면제",
+      "rows": []
+    },
+    "preventionMaintenance": {
+      "exempt": false,
+      "rows": []
+    },
+    "selfMeasurement": {
+      "measureDate": "",
+      "weather": "",
+      "temp": "",
+      "humidity": "",
+      "pressure": "",
+      "windDir": "",
+      "windSpeed": "",
+      "rows": []
+    },
+    "fuelUsage": "-",
+    "rawMaterialUsage": "-",
+    "engineerOpinion": "배출시설 미가동.",
+    "etc": "-",
+    "technician": {
+      "position": "부장",
+      "name": "윤 경 용"
+    },
+    "managerSign": "",
+    "technicianSign": "",
+    "updatedAt": "2026-09-23T12:08:54.325Z"
+  },
+  "2026-09-22": {
+    "date": "2026-09-22",
+    "formattedDate": "2026년 9월 22일 화요일",
+    "isHoliday": false,
+    "holidayReason": "평일",
+    "status": "IDLE",
+    "workHours": "09:00 ~ 18:00",
+    "weatherInfo": {
+      "weather": "맑음",
+      "temp": "18 ~ 26℃"
+    },
+    "exhaustList": [
+      {
+        "id": "1",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "2",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "3",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      },
+      {
+        "id": "4",
+        "facility": "혼합시설",
+        "opTime": "-",
+        "note": "미가동"
+      }
+    ],
+    "preventionOperation": {
+      "exempt": true,
+      "text": "방지시설 면제",
+      "rows": []
+    },
+    "preventionMaintenance": {
+      "exempt": false,
+      "rows": []
+    },
+    "selfMeasurement": {
+      "measureDate": "",
+      "weather": "",
+      "temp": "",
+      "humidity": "",
+      "pressure": "",
+      "windDir": "",
+      "windSpeed": "",
+      "rows": []
+    },
+    "fuelUsage": "-",
+    "rawMaterialUsage": "-",
+    "engineerOpinion": "배출시설 미가동.",
+    "etc": "-",
+    "technician": {
+      "position": "부장",
+      "name": "윤 경 용"
+    },
+    "managerSign": "",
+    "technicianSign": "",
+    "updatedAt": "2026-09-23T12:08:54.325Z"
   }
 }

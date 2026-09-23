@@ -387,6 +387,30 @@ app.post('/api/trigger-daily-auto', async (req, res) => {
   }
 });
 
+// 기간별 일괄 자동작성 트리거 API
+app.post('/api/records/batch-generate', async (req, res) => {
+  const { startDate, endDate } = req.body;
+  if (!startDate || !endDate) {
+    return res.status(400).json({ success: false, message: '시작일과 종료일(YYYY-MM-DD)이 필요합니다.' });
+  }
+
+  try {
+    const start = new Date(startDate + 'T00:00:00');
+    const end = new Date(endDate + 'T00:00:00');
+    const results = [];
+
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const curDateStr = d.toISOString().split('T')[0];
+      const rec = await autoCreateDailyRecord(curDateStr);
+      results.push({ date: curDateStr, status: rec.status });
+    }
+
+    res.json({ success: true, message: `${results.length}건의 일일 기록이 일괄 생성되었습니다.`, count: results.length, data: results });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 // 엑셀(.xlsx) 내보내기 API
 app.get('/api/export/excel/:date', async (req, res) => {
   const dateStr = req.params.date;
