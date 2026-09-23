@@ -432,21 +432,23 @@
           측정일: <input type="date" id="measureDateInput" style="border: 1px solid #cbd5e1; border-radius: 4px; padding: 2px 6px;">
         </div>
 
-        <!-- 기상 조건 테이블 (자가측정용 기상 - 빈칸 기본값) -->
-        <table class="sheet-table seamless-table-top" style="margin-bottom: 0; border-bottom: none;">
+        <!-- 3개 표를 여백없이 1개로 통합한 자가측정 및 원료/연료 통합 테이블 -->
+        <table class="sheet-table" id="selfMeasurementUnifiedTable" style="margin-top: 2px; margin-bottom: 0;">
           <thead>
+            <!-- 1. 기상 조건 헤더 -->
             <tr>
-              <th style="width: 32%;">①기 상</th>
-              <th style="width: 13%;">②기온</th>
-              <th style="width: 13%;">③습도</th>
-              <th style="width: 14%;">④기압</th>
-              <th style="width: 14%;">⑤풍향</th>
-              <th style="width: 14%;">⑥풍속</th>
+              <th colspan="2" style="width: 26%;">①기 상</th>
+              <th style="width: 12%;">②기온</th>
+              <th style="width: 17%;">③습도</th>
+              <th style="width: 12%;">④기압</th>
+              <th style="width: 12%;">⑤풍향</th>
+              <th colspan="3" style="width: 21%;">⑥풍속</th>
             </tr>
           </thead>
           <tbody>
+            <!-- 1-1. 기상 조건 데이터 행 -->
             <tr>
-              <td style="text-align: center;">
+              <td colspan="2" style="text-align: center;">
                 <div class="checkbox-group" style="justify-content: center;">
                   <label><input type="radio" name="selfWeather" value="맑음"> 맑음</label>
                   <label><input type="radio" name="selfWeather" value="흐림"> 흐림</label>
@@ -459,14 +461,10 @@
               <td><div class="val-unit-wrap"><input type="text" id="selfHumidity" class="editable-cell inline-num" value=""><span>%</span></div></td>
               <td><div class="val-unit-wrap"><input type="text" id="selfPressure" class="editable-cell inline-num" value=""><span>mb</span></div></td>
               <td><div class="val-unit-wrap"><input type="text" id="selfWindDir" class="editable-cell inline-num" value=""><span>풍</span></div></td>
-              <td><div class="val-unit-wrap"><input type="text" id="selfWindSpeed" class="editable-cell inline-num" value=""><span>m/s</span></div></td>
+              <td colspan="3"><div class="val-unit-wrap"><input type="text" id="selfWindSpeed" class="editable-cell inline-num" value=""><span>m/s</span></div></td>
             </tr>
-          </tbody>
-        </table>
 
-        <!-- 자가측정 결과 테이블 (표간 여백 완전 제거 및 일체화) -->
-        <table class="sheet-table seamless-table-bottom" style="margin-top: 0; margin-bottom: 2px;">
-          <thead>
+            <!-- 2. 자가측정 결과 헤더 행 -->
             <tr>
               <th style="width: 10%;">⑦배출구<br>번 호</th>
               <th style="width: 16%;">⑧주요배출<br>시 설 명</th>
@@ -478,53 +476,54 @@
               <th style="width: 9%;">⑭검 사<br>방 법</th>
               <th class="no-print" style="width: 5%;">삭제</th>
             </tr>
-          </thead>
-          <tbody id="measurementTableBody">
-            <!-- 자바스크립트로 자가측정 행 렌더링 -->
           </tbody>
-        </table>
 
-        <!-- 연료 및 원료 사용량 -->
-        <table class="sheet-table" style="margin-top: 4px;">
-          <tr>
-            <th style="width: 35%;">
-              <div>⑮연  료  명    및    사  용  량</div>
-              <div style="font-weight: normal; font-size: 0.8rem; margin-top: 3px;">(&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;일)</div>
-            </th>
-            <td><input type="text" id="fuelUsageInput" class="editable-cell" placeholder="연료명 및 사용량 기재" value="-"></td>
-          </tr>
-          <tr>
-            <th>⑯원 료 명 및 사 용 량<br><span style="font-size:0.7rem; font-weight:normal;">(특정대기유해물질 배출원 포함)</span></th>
-            <td><input type="text" id="rawMaterialUsageInput" class="editable-cell" placeholder="원료명 및 사용량 기재" value="-"></td>
-          </tr>
-          <tr>
-            <th>⑰환 경 기 술 인 의 의 견</th>
-            <td><textarea id="opinionInput" class="textarea-in-cell" placeholder="의견 기재 (예: 설비 정상 가동 중 이상 없음)">특이사항 없음. 정상 가동.</textarea></td>
-          </tr>
-          <tr>
-            <th>⑱기 타</th>
-            <td><textarea id="etcInput" class="textarea-in-cell" placeholder="기타 특이사항 기재">-</textarea></td>
-          </tr>
-          <!-- 기타 박스 바로 밑에 박스로 들어가는 환경기술인 행 -->
-          <tr>
-            <td colspan="2" class="engineer-box-cell">
-              <div class="engineer-distributed-box">
-                <div class="eng-item">
-                  <span>환경기술인 직급 :</span>
-                  <input type="text" id="technicianPosition" class="eng-input" style="width: 70px;" value="부장">
-                </div>
-                <div class="eng-item">
-                  <span>성명 :</span>
-                  <input type="text" id="technicianName" class="eng-input" style="width: 90px;" value="윤 경 용">
-                </div>
-                <div class="eng-item">
-                  <div id="signTechnician" class="technician-sign-slot" title="클릭하여 환경기술인 전자결재/서명 입력">
-                    <span class="stamp-bracket">(인)</span>
+          <!-- 2-1. 자바스크립트로 자가측정 동적 행 렌더링 -->
+          <tbody id="measurementTableBody">
+          </tbody>
+
+          <!-- 3. 연료 및 원료 사용량 / 환경기술인 의견 섹션 -->
+          <tbody>
+            <tr>
+              <th colspan="3">
+                <div>⑮연  료  명    및    사  용  량</div>
+                <div style="font-weight: normal; font-size: 0.8rem; margin-top: 3px;">(&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;일)</div>
+              </th>
+              <td colspan="6"><input type="text" id="fuelUsageInput" class="editable-cell" placeholder="연료명 및 사용량 기재" value="-"></td>
+            </tr>
+            <tr>
+              <th colspan="3">⑯원 료 명 및 사 용 량<br><span style="font-size:0.7rem; font-weight:normal;">(특정대기유해물질 배출원 포함)</span></th>
+              <td colspan="6"><input type="text" id="rawMaterialUsageInput" class="editable-cell" placeholder="원료명 및 사용량 기재" value="-"></td>
+            </tr>
+            <tr>
+              <th colspan="3">⑰환 경 기 술 인 의 의 견</th>
+              <td colspan="6"><textarea id="opinionInput" class="textarea-in-cell" placeholder="의견 기재 (예: 설비 정상 가동 중 이상 없음)">특이사항 없음. 정상 가동.</textarea></td>
+            </tr>
+            <tr>
+              <th colspan="3">⑱기 타</th>
+              <td colspan="6"><textarea id="etcInput" class="textarea-in-cell" placeholder="기타 특이사항 기재">-</textarea></td>
+            </tr>
+            <!-- 환경기술인 서명란 -->
+            <tr>
+              <td colspan="9" class="engineer-box-cell">
+                <div class="engineer-distributed-box">
+                  <div class="eng-item">
+                    <span>환경기술인 직급 :</span>
+                    <input type="text" id="technicianPosition" class="eng-input" style="width: 70px;" value="부장">
+                  </div>
+                  <div class="eng-item">
+                    <span>성명 :</span>
+                    <input type="text" id="technicianName" class="eng-input" style="width: 90px;" value="윤 경 용">
+                  </div>
+                  <div class="eng-item">
+                    <div id="signTechnician" class="technician-sign-slot" title="클릭하여 환경기술인 전자결재/서명 입력">
+                      <span class="stamp-bracket">(인)</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </td>
-          </tr>
+              </td>
+            </tr>
+          </tbody>
         </table>
       </div>
 

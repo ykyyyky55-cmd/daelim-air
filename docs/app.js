@@ -2145,20 +2145,22 @@ document.addEventListener('DOMContentLoaded', () => {
       <article class="${pageClass}">
         <div class="sheet-badge">양식 2 : 자가측정 및 원료/연료 운영기록부 (뒷면) - ${record.date}</div>
         <div class="section-title" style="margin: 6px 0 2px 0;"><span>3. 자가측정사항</span></div>
-        <!-- 기상조건 표 (표간 여백 제거: seamless-table-top) -->
-        <table class="sheet-table seamless-table-top" style="margin-bottom: 0; border-bottom: none;">
+        <!-- 3개 표를 여백없이 1개로 통합한 자가측정 및 원료/연료 통합 테이블 -->
+        <table class="sheet-table" style="margin-top: 2px; margin-bottom: 0;">
           <thead>
+            <!-- 1. 기상조건 헤더 -->
             <tr>
-              <th style="width: 12%;">측정일자</th>
-              <th style="width: 16%;">기상</th>
+              <th style="width: 14%;">측정일자</th>
+              <th style="width: 14%;">기상</th>
               <th style="width: 14%;">기온(℃)</th>
               <th style="width: 14%;">습도(%)</th>
-              <th style="width: 14%;">기압(mmHg)</th>
+              <th style="width: 15%;">기압(mmHg)</th>
               <th style="width: 14%;">풍향</th>
-              <th style="width: 16%;">풍속(m/s)</th>
+              <th style="width: 15%;">풍속(m/s)</th>
             </tr>
           </thead>
           <tbody>
+            <!-- 1-1. 기상조건 데이터 행 -->
             <tr>
               <td>${record.selfMeasurement ? record.selfMeasurement.measureDate || '-' : '-'}</td>
               <td>${record.selfMeasurement ? record.selfMeasurement.weather || '-' : '-'}</td>
@@ -2168,11 +2170,8 @@ document.addEventListener('DOMContentLoaded', () => {
               <td>${record.selfMeasurement ? record.selfMeasurement.windDir || '-' : '-'}</td>
               <td>${record.selfMeasurement ? record.selfMeasurement.windSpeed || '-' : '-'}</td>
             </tr>
-          </tbody>
-        </table>
-        <!-- 측정결과 표 (표간 여백 제거: seamless-table-bottom) -->
-        <table class="sheet-table seamless-table-bottom" style="margin-top: 0; margin-bottom: 2px;">
-          <thead>
+
+            <!-- 2. 자가측정 결과 헤더 -->
             <tr>
               <th style="width: 10%;">배출구</th>
               <th style="width: 18%;">배출시설명</th>
@@ -2182,8 +2181,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <th style="width: 14%;">배출량</th>
               <th style="width: 16%;">측정방법</th>
             </tr>
-          </thead>
-          <tbody>
+            <!-- 2-1. 자가측정 결과 데이터 행 -->
             ${(record.selfMeasurement && record.selfMeasurement.rows && record.selfMeasurement.rows.length > 0 ? record.selfMeasurement.rows : [{}]).map(r => `
               <tr>
                 <td>${r.exhaustNo || '-'}</td>
@@ -2195,31 +2193,37 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>${r.method || '-'}</td>
               </tr>
             `).join('')}
+
+            <!-- 3. 원료 및 연료 사용량 섹션 -->
+            <tr>
+              <th colspan="3">연료명 및 사용량</th>
+              <th colspan="4">원료명 및 사용량</th>
+            </tr>
+            <tr>
+              <td colspan="3" style="padding: 6px 10px;">${record.fuelUsage || '-'}</td>
+              <td colspan="4" style="padding: 6px 10px;">${record.rawMaterialUsage || '-'}</td>
+            </tr>
+
+            <!-- 4. 환경기술인 의견 및 특이사항 섹션 -->
+            <tr>
+              <th colspan="7" style="background:#f8fafc; font-weight:600; text-align:left; padding:4px 8px;">환경기술인 의견 및 특이사항</th>
+            </tr>
+            <tr>
+              <td colspan="7" style="min-height: 40px; padding: 6px 10px; font-size: 0.88rem; text-align: left;">
+                ${record.engineerOpinion || '특이사항 없음. 정상 가동.'}
+              </td>
+            </tr>
+            <!-- 5. 환경기술인 서명란 -->
+            <tr>
+              <td colspan="7" style="padding: 4px 12px;">
+                <div class="technician-box" style="margin: 0; border: none; display: flex; justify-content: space-between; align-items: center;">
+                  <div style="font-weight: 600;">환경기술인 : 부장 윤 경 용</div>
+                  <div class="technician-sign-cell">${techSignImg}</div>
+                </div>
+              </td>
+            </tr>
           </tbody>
         </table>
-        <div class="section-title" style="margin-top: 6px; margin-bottom: 2px;"><span>4. 원료 및 연료 사용량</span></div>
-        <table class="sheet-table" style="margin-top: 0;">
-          <thead>
-            <tr>
-              <th style="width: 50%;">연료명 및 사용량</th>
-              <th style="width: 50%;">원료명 및 사용량</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style="padding: 6px 10px;">${record.fuelUsage || '-'}</td>
-              <td style="padding: 6px 10px;">${record.rawMaterialUsage || '-'}</td>
-            </tr>
-          </tbody>
-        </table>
-        <div class="section-title" style="margin-top: 6px; margin-bottom: 2px;"><span>5. 환경기술인 의견 및 특이사항</span></div>
-        <div class="info-box-table" style="min-height: 40px; padding: 6px 10px; font-size: 0.88rem; margin-bottom: 4px;">
-          ${record.engineerOpinion || '특이사항 없음. 정상 가동.'}
-        </div>
-        <div class="technician-box" style="margin-top: 6px;">
-          <div style="font-weight: 600;">환경기술인 : 부장 윤 경 용</div>
-          <div class="technician-sign-cell">${techSignImg}</div>
-        </div>
       </article>
     `;
 
