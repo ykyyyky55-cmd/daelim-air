@@ -2435,6 +2435,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (statTotalCount) statTotalCount.textContent = `${count} 일`;
     if (statLatestDate) statLatestDate.textContent = latest;
     if (homeQuickDate && !homeQuickDate.value) homeQuickDate.value = latest;
+    if (homeEditDate && !homeEditDate.value) homeEditDate.value = latest;
 
     // Supabase 연동 배지 상태 동기화
     if (homeSupabaseBadge) {
@@ -2757,7 +2758,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // 2. 홈 카드: [✍️ 운영기록부 작성 / 편집]
   if (btnGoEditorToday) {
     btnGoEditorToday.addEventListener('click', () => {
-      showEditorScreen(recordDateInput.value || new Date().toISOString().split('T')[0]);
+      showEditorScreen(new Date().toISOString().split('T')[0]);
+    });
+  }
+
+  // 2-1. 특정 일자 선택 편집
+  const homeEditDate = document.getElementById('homeEditDate');
+  const btnGoEditorDate = document.getElementById('btnGoEditorDate');
+  if (btnGoEditorDate) {
+    btnGoEditorDate.addEventListener('click', () => {
+      const d = homeEditDate.value;
+      if (!d) {
+        alert('편집할 일자를 선택해 주세요.');
+        return;
+      }
+      showEditorScreen(d);
     });
   }
 
@@ -2830,6 +2845,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // 초기 시작: 홈 포털 대시보드 화면을 기본으로 표시하고 최신 데이터 갱신
   const todayStr = new Date().toISOString().split('T')[0];
   recordDateInput.value = todayStr;
+  if (homeEditDate) homeEditDate.value = todayStr;
+  if (homeQuickDate) homeQuickDate.value = todayStr;
   loadRecord(todayStr); // 오늘 데이터 백그라운드 선로드
   showHomeScreen();     // 홈 화면 진입
 });

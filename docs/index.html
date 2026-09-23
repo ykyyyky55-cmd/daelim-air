@@ -17,136 +17,133 @@
   <!-- 홈 화면 포털 대시보드 (Home Portal Dashboard) -->
   <!-- ============================================================ -->
   <main id="homeScreen" class="home-portal-container">
+    <!-- 포털 상단 브랜딩 헤더 -->
     <header class="home-portal-header">
       <div class="portal-header-left">
         <div class="company-badge">대림산업(주)</div>
-        <h1 class="portal-main-title">대기배출시설 및 방지시설 운영기록부 통합 관리 시스템</h1>
+        <h1 class="portal-main-title">대기배출시설 및 방지시설 운영기록부 관리 포털</h1>
       </div>
       <div class="portal-header-right">
         <span id="homeSupabaseBadge" class="status-badge" style="background:#10b981; color:#fff; cursor:pointer;" title="Supabase 데이터베이스 연동 상태">⚡ Supabase 연동됨</span>
-        <button type="button" id="btnHomeOpenSupabaseModal" class="btn btn-default" style="font-size:0.85rem;">⚡ 클라우드 설정</button>
+        <button type="button" id="btnHomeOpenSupabaseModal" class="btn btn-default" style="font-size:0.85rem; font-weight:600;">⚡ 클라우드 설정</button>
       </div>
     </header>
 
-    <div class="portal-content-body">
-      <!-- 상태 요약 대시보드 카드들 -->
-      <section class="portal-stat-grid">
-        <div class="stat-card">
-          <div class="stat-icon">📅</div>
-          <div class="stat-info">
-            <span class="stat-label">등록된 운영기록</span>
-            <strong id="statTotalCount" class="stat-value">28 일</strong>
+    <!-- 포털 현황 요약 칩 바 -->
+    <div class="portal-summary-strip">
+      <div class="summary-chip">
+        <span class="chip-icon">📅</span>
+        <span class="chip-label">총 기록 일수:</span>
+        <strong id="statTotalCount" class="chip-value">28 일</strong>
+      </div>
+      <div class="summary-chip">
+        <span class="chip-icon">🕒</span>
+        <span class="chip-label">최근 기록:</span>
+        <strong id="statLatestDate" class="chip-value">2026-09-23</strong>
+      </div>
+      <div class="summary-chip">
+        <span class="chip-icon">🏭</span>
+        <span class="chip-label">배출/방지시설:</span>
+        <strong class="chip-value">1~4번 혼합시설 (설치 면제)</strong>
+      </div>
+      <div class="summary-chip">
+        <span class="chip-icon">🔴</span>
+        <span class="chip-label">전자결재 직인:</span>
+        <strong class="chip-value" style="color:#dc2626;">일자별 자동 날인 연동</strong>
+      </div>
+    </div>
+
+    <!-- 포털 메인 2단 업무 패널 -->
+    <div class="portal-main-grid">
+      <!-- 좌측 패널: 운영기록부 작성 및 관리 -->
+      <section class="portal-panel-card panel-editor">
+        <div class="panel-card-header">
+          <div class="panel-title-group">
+            <span class="panel-badge badge-blue">작성 및 관리</span>
+            <h2>✍️ 운영기록부 작성</h2>
+          </div>
+          <span class="panel-icon">📝</span>
+        </div>
+        <p class="panel-desc">
+          배출구 가동시간, 김포시 월곶면 기상 연동, 환경기술인 의견을 작성하여 로컬 및 Supabase 클라우드에 실시간 동기화합니다.
+        </p>
+
+        <!-- 오늘 기록 작성 버튼 -->
+        <div class="panel-primary-action">
+          <button type="button" id="btnGoEditorToday" class="btn btn-primary portal-btn-hero">
+            ✍️ 오늘 운영기록부 작성 / 편집
+          </button>
+        </div>
+
+        <!-- 특정 일자 선택 편집 폼 -->
+        <div class="panel-sub-box">
+          <label for="homeEditDate" class="sub-box-label">다른 일자 선택 편집:</label>
+          <div class="inline-action-group">
+            <input type="date" id="homeEditDate" class="form-input portal-input" style="flex:1;">
+            <button type="button" id="btnGoEditorDate" class="btn btn-default" style="font-weight:600; padding:8px 16px;">
+              ✏️ 열기
+            </button>
           </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon">🕒</div>
-          <div class="stat-info">
-            <span class="stat-label">최근 기록 일자</span>
-            <strong id="statLatestDate" class="stat-value">2026-09-23</strong>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">🏭</div>
-          <div class="stat-info">
-            <span class="stat-label">배출구 및 방지시설</span>
-            <strong class="stat-value" style="font-size:1.05rem;">1~4번 혼합시설 (면제)</strong>
-          </div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon">🔴</div>
-          <div class="stat-info">
-            <span class="stat-label">전자결재 직인</span>
-            <strong class="stat-value" style="font-size:1.05rem; color:#dc2626;">일자별 자동 날인</strong>
-          </div>
+
+        <!-- 일괄 검색 및 인쇄 창 바로가기 -->
+        <div class="panel-footer-action">
+          <button type="button" id="btnGoSearchModal" class="btn btn-default btn-block" style="border-color:#3b82f6; color:#1d4ed8; font-weight:700;">
+            📑 월간/주간/일일 일괄 검색 및 A4 인쇄 창 열기
+          </button>
         </div>
       </section>
 
-      <!-- 핵심 서비스 바로가기 카드 3종 -->
-      <section class="portal-menu-grid">
-        <!-- 메뉴 1: 작성 및 편집 -->
-        <div class="portal-menu-card menu-card-editor">
-          <div class="menu-card-header">
-            <span class="menu-badge" style="background:#2563eb;">작성 / 수정</span>
-            <span class="menu-icon">✍️</span>
+      <!-- 우측 패널: 운영기록부 책 넘김 바인더 열람 센터 -->
+      <section class="portal-panel-card panel-viewer">
+        <div class="panel-card-header">
+          <div class="panel-title-group">
+            <span class="panel-badge badge-purple">바인더 뷰어</span>
+            <h2>📖 책 넘김 바인더 열람</h2>
           </div>
-          <h3>운영기록부 작성 및 편집</h3>
-          <p>특정 일자의 배출시설 가동시간, 김포시 월곶면 기상 연동, 환경기술인 의견을 작성하고 저장합니다.</p>
-          <div class="menu-card-action">
-            <button type="button" id="btnGoEditorToday" class="btn btn-primary btn-block">
-              ✍️ 운영기록부 작성 / 편집
-            </button>
-          </div>
+          <span class="panel-icon">📚</span>
+        </div>
+        <p class="panel-desc">
+          실제 서류철 바인더처럼 앞면(양식 1)과 뒷면(양식 2)을 좌우로 펼쳐서 페이지를 넘겨가며 일자별 기록부를 실감나게 열람합니다.
+        </p>
+
+        <!-- 전체 기록 바인더 열람 버튼 -->
+        <div class="panel-primary-action">
+          <button type="button" id="btnHomeViewAll" class="btn btn-primary portal-btn-hero portal-btn-purple">
+            📖 전체 운영기록 바인더 열람 (원클릭)
+          </button>
         </div>
 
-        <!-- 메뉴 2: 책 넘김 바인더 열람 -->
-        <div class="portal-menu-card menu-card-viewer">
-          <div class="menu-card-header">
-            <span class="menu-badge" style="background:#8b5cf6;">바인더 뷰어</span>
-            <span class="menu-icon">📖</span>
-          </div>
-          <h3>운영기록부 책 넘김 열람</h3>
-          <p>실제 서류철 바인더처럼 앞면과 뒷면(2면)을 좌우로 펼쳐서 페이지를 넘겨가며 실감나게 열람합니다.</p>
-          <div class="menu-card-action">
-            <button type="button" id="btnGoBookViewerAll" class="btn btn-default btn-block" style="border-color:#8b5cf6; color:#6d28d9; background:#f5f3ff; font-weight:700;">
-              📖 책 뷰어로 전체 열람
-            </button>
-          </div>
-        </div>
-
-        <!-- 메뉴 3: 일괄 검색 및 인쇄 -->
-        <div class="portal-menu-card menu-card-search">
-          <div class="menu-card-header">
-            <span class="menu-badge" style="background:#0284c7;">검색 / 인쇄</span>
-            <span class="menu-icon">📑</span>
-          </div>
-          <h3>일괄 검색 / 인쇄 / 생성</h3>
-          <p>월간, 주간, 일일 검색을 지원하며, 9월 기간 일괄 자동생성 및 표준 A4 연속 인쇄를 제공합니다.</p>
-          <div class="menu-card-action">
-            <button type="button" id="btnGoSearchModal" class="btn btn-default btn-block" style="border-color:#3b82f6; color:#1d4ed8; font-weight:700;">
-              📑 일괄 검색 및 인쇄 창
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- 일자선택 / 기간선택 / 전체선택 열람 컨트롤 패널 -->
-      <section class="portal-quick-panel">
-        <div class="quick-panel-title">
-          <span>📚</span> <strong>운영기록부 빠른 책 뷰어 열람 (일자 / 기간 / 전체)</strong>
-        </div>
-        <div class="quick-panel-grid">
-          <!-- ① 일자선택 열람 -->
-          <div class="quick-box">
-            <h4>1️⃣ 특정 일자 열람</h4>
-            <p>열람을 원하는 단일 일자를 선택합니다.</p>
-            <div class="quick-controls">
-              <input type="date" id="homeQuickDate" class="form-input" style="padding:6px 10px;">
-              <button type="button" id="btnHomeViewDate" class="btn btn-primary" style="padding:6px 12px; font-weight:600;">📖 선택일자 열람</button>
-            </div>
-          </div>
-
-          <!-- ② 기간선택 열람 -->
-          <div class="quick-box">
-            <h4>2️⃣ 기간 범위 열람</h4>
-            <p>시작일과 종료일을 지정하여 연속 열람합니다.</p>
-            <div class="quick-controls">
-              <input type="date" id="homeQuickStart" class="form-input" value="2026-09-01" style="padding:6px 6px; width:125px;">
-              <span>~</span>
-              <input type="date" id="homeQuickEnd" class="form-input" value="2026-09-22" style="padding:6px 6px; width:125px;">
-              <button type="button" id="btnHomeViewRange" class="btn btn-weather" style="padding:6px 12px; font-weight:600;">📖 기간 열람</button>
-            </div>
-          </div>
-
-          <!-- ③ 전체선택 열람 -->
-          <div class="quick-box">
-            <h4>3️⃣ 전체 기록 열람</h4>
-            <p>저장된 모든 운영기록을 순서대로 바인딩합니다.</p>
-            <div class="quick-controls">
-              <button type="button" id="btnHomeViewAll" class="btn btn-success" style="width:100%; font-weight:700; padding:8px 12px;">
-                📖 전체 기록 바인더 열람 (원클릭)
+        <!-- 상세 열람 컨트롤 박스 -->
+        <div class="panel-sub-box">
+          <!-- ① 특정 일자 열람 -->
+          <div class="quick-row" style="margin-bottom: 12px;">
+            <label for="homeQuickDate" class="sub-box-label" style="min-width: 80px;">일자별 열람:</label>
+            <div class="inline-action-group" style="flex:1;">
+              <input type="date" id="homeQuickDate" class="form-input portal-input" style="flex:1;">
+              <button type="button" id="btnHomeViewDate" class="btn btn-default" style="border-color:#8b5cf6; color:#6d28d9; font-weight:600; padding:8px 16px;">
+                📖 열람
               </button>
             </div>
           </div>
+
+          <!-- ② 기간 범위 열람 -->
+          <div class="quick-row">
+            <label class="sub-box-label" style="min-width: 80px;">기간별 열람:</label>
+            <div class="inline-action-group" style="flex:1;">
+              <input type="date" id="homeQuickStart" class="form-input portal-input" value="2026-09-01" style="width: 125px;">
+              <span style="color:#64748b; font-weight:700;">~</span>
+              <input type="date" id="homeQuickEnd" class="form-input portal-input" value="2026-09-22" style="width: 125px;">
+              <button type="button" id="btnHomeViewRange" class="btn btn-weather" style="font-weight:600; padding:8px 16px;">
+                📖 기간 열람
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 안내 팁 -->
+        <div class="panel-footer-tip">
+          💡 바인더 뷰어에서는 키보드 방향키(<strong>←</strong>, <strong>→</strong>)로 책장을 넘길 수 있습니다.
         </div>
       </section>
     </div>
