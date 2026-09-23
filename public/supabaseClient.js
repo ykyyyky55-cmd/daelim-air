@@ -25,13 +25,17 @@
     return cleaned;
   }
 
+  // 기본 Supabase 프로젝트 URL
+  const DEFAULT_SUPABASE_URL = 'https://mdvgqerpterawrwejgoz.supabase.co';
+  const DEFAULT_SUPABASE_KEY = '';
+
   /**
    * 저장된 Supabase 연결 설정 가져오기
    * @returns {{ url: string, key: string }}
    */
   function getSupabaseConfig() {
-    const url = localStorage.getItem(STORAGE_KEY_URL) || '';
-    const key = localStorage.getItem(STORAGE_KEY_KEY) || '';
+    const url = localStorage.getItem(STORAGE_KEY_URL) || DEFAULT_SUPABASE_URL;
+    const key = localStorage.getItem(STORAGE_KEY_KEY) || DEFAULT_SUPABASE_KEY;
     return {
       url: normalizeUrl(url),
       key: key.trim()
