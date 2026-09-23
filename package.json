@@ -1,0 +1,15 @@
+{
+  "name": "daelim-air-app",
+  "version": "1.0.0",
+  "description": "대기배출시설 및 방지시설 운영기록부 일일 작성 애플리케이션",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "exceljs": "^4.4.0",
+    "express": "^4.19.2",
+    "node-cron": "^4.6.0"
+  }
+}
