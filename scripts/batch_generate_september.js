@@ -97,10 +97,22 @@ function createDailyRecord(dateStr) {
       position: '부장',
       name: '윤 경 용'
     },
-    managerSign: '',
-    technicianSign: '',
+    managerSign: generateStampSvg('윤경용', dateStr),
+    technicianSign: generateStampSvg('윤경용', dateStr),
     updatedAt: new Date().toISOString()
   };
+}
+
+function generateStampSvg(nameText, dateStr) {
+  const dStr = (dateStr || '').replace(/-/g, '.');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="140" height="140" viewBox="0 0 140 140">
+    <circle cx="70" cy="70" r="63" fill="none" stroke="#dc2626" stroke-width="3.5" />
+    <circle cx="70" cy="70" r="57" fill="none" stroke="#dc2626" stroke-width="1.5" />
+    <text x="70" y="37" fill="#dc2626" font-family="'Noto Sans KR', sans-serif" font-weight="bold" font-size="13" text-anchor="middle">전자결재</text>
+    <text x="70" y="78" fill="#dc2626" font-family="'Noto Sans KR', sans-serif" font-weight="bold" font-size="25" text-anchor="middle">${nameText}</text>
+    <text x="70" y="108" fill="#dc2626" font-family="'Noto Sans KR', sans-serif" font-weight="bold" font-size="11" text-anchor="middle">${dStr}</text>
+  </svg>`;
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
 }
 
 /**

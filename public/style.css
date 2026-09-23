@@ -938,6 +938,313 @@ body {
     box-sizing: border-box !important;
     background: #ffffff !important;
   }
+  #bookViewerModal {
+    display: none !important;
+  }
+}
+
+/* ============================================================ */
+/* 책 넘김 바인더 뷰어 (Flipbook / Binder Viewer) 전용 스타일 */
+/* ============================================================ */
+.book-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  background: rgba(15, 23, 42, 0.94);
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* 뷰어 상단 툴바 */
+.book-modal-toolbar {
+  height: 56px;
+  background: rgba(30, 41, 59, 0.92);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 30;
+  flex-shrink: 0;
+}
+
+.book-toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.book-toolbar-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: #f8fafc;
+}
+
+.book-page-badge {
+  background: #3b82f6;
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.book-toolbar-center {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.book-nav-btn {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  padding: 6px 14px !important;
+  font-size: 0.85rem !important;
+  font-weight: 600 !important;
+  transition: all 0.2s !important;
+}
+
+.book-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  border-color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
+.book-nav-btn:disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+}
+
+.book-date-select {
+  padding: 6px 12px !important;
+  font-size: 0.88rem !important;
+  font-weight: 600 !important;
+  border-radius: 6px !important;
+  background: #ffffff !important;
+  color: #0f172a !important;
+  min-width: 220px !important;
+  cursor: pointer !important;
+}
+
+.book-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.book-close-btn {
+  background: rgba(239, 68, 68, 0.2) !important;
+  color: #fca5a5 !important;
+  border: 1px solid rgba(239, 68, 68, 0.4) !important;
+  width: 34px !important;
+  height: 34px !important;
+  padding: 0 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 1.1rem !important;
+  border-radius: 6px !important;
+  transition: all 0.2s !important;
+}
+
+.book-close-btn:hover {
+  background: #ef4444 !important;
+  color: #ffffff !important;
+}
+
+/* 책 본체 스테이지 영역 */
+.book-stage {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 16px 70px 32px 70px;
+  overflow: auto;
+  perspective: 2500px;
+}
+
+/* 좌우 플로팅 이전/다음 화살표 버튼 */
+.book-floating-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  color: #ffffff;
+  font-size: 1.8rem;
+  font-weight: 300;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+}
+
+.book-floating-prev {
+  left: 16px;
+}
+
+.book-floating-next {
+  right: 16px;
+}
+
+.book-floating-arrow:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.35);
+  border-color: #ffffff;
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+.book-floating-arrow:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+/* 양면 펼침 바인더 본체 */
+.book-binder-spread {
+  display: flex;
+  position: relative;
+  background: #cbd5e1;
+  border-radius: 12px;
+  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.15);
+  max-width: 96vw;
+  max-height: 86vh;
+  transition: transform 0.3s ease, opacity 0.25s ease;
+  user-select: text;
+}
+
+/* 플립 애니메이션 클래스 */
+.book-binder-spread.flip-animation-next {
+  animation: bookPageTurnNext 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.book-binder-spread.flip-animation-prev {
+  animation: bookPageTurnPrev 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes bookPageTurnNext {
+  0% { transform: scale(1) rotateY(0deg); }
+  50% { transform: scale(0.97) rotateY(-4deg); opacity: 0.75; }
+  100% { transform: scale(1) rotateY(0deg); opacity: 1; }
+}
+
+@keyframes bookPageTurnPrev {
+  0% { transform: scale(1) rotateY(0deg); }
+  50% { transform: scale(0.97) rotateY(4deg); opacity: 0.75; }
+  100% { transform: scale(1) rotateY(0deg); opacity: 1; }
+}
+
+/* 각 페이지 컨테이너 */
+.book-page-wrapper {
+  width: 46vw;
+  max-width: 720px;
+  height: 84vh;
+  max-height: 1040px;
+  overflow-y: auto;
+  background: #ffffff;
+  padding: 16px 20px;
+  box-sizing: border-box;
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.04);
+}
+
+.book-page-left {
+  border-radius: 10px 0 0 10px;
+  border-right: 1px solid #e2e8f0;
+}
+
+.book-page-right {
+  border-radius: 0 10px 10px 0;
+  border-left: 1px solid #e2e8f0;
+}
+
+/* 중앙 바인더 제본 링 및 힌지 */
+.book-spine {
+  width: 36px;
+  background: linear-gradient(90deg, #64748b 0%, #cbd5e1 30%, #f1f5f9 50%, #cbd5e1 70%, #64748b 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: center;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.45);
+  z-index: 10;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.spine-ring {
+  width: 100%;
+  height: 24px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spine-hole-left {
+  position: absolute;
+  left: -6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #0f172a;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.spine-hole-right {
+  position: absolute;
+  right: -6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #0f172a;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.spine-metal-ring {
+  width: 44px;
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #f8fafc 0%, #94a3b8 40%, #475569 80%, #1e293b 100%);
+  border: 1px solid #475569;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+  z-index: 12;
+}
+
+/* 하단 키보드 단축키 안내 */
+.book-footer-tip {
+  height: 32px;
+  background: rgba(15, 23, 42, 0.85);
+  color: #94a3b8;
+  font-size: 0.82rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.book-footer-tip strong {
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  padding: 1px 6px;
+  border-radius: 4px;
+  margin: 0 3px;
 }
 
 

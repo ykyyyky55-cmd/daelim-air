@@ -62,6 +62,11 @@
           🏖️ 전체 휴무
         </button>
 
+        <!-- 책 넘김 바인더 뷰어 버튼 -->
+        <button type="button" id="btnOpenBookViewer" class="btn btn-default" style="border-color:#8b5cf6; color:#6d28d9; font-weight:600; background:#f5f3ff;" title="책처럼 좌우 양면을 넘겨가며 일자별 기록부 열람">
+          📖 책 넘김 뷰어
+        </button>
+
         <!-- 일괄 검색 및 일괄 열람/인쇄 버튼 -->
         <button type="button" id="btnOpenSearchModal" class="btn btn-default" style="border-color:#3b82f6; color:#1d4ed8; font-weight:600;" title="월간/주간/일일 검색 및 일괄 열람/인쇄">
           📑 일괄 검색 / 인쇄
@@ -557,6 +562,9 @@
           </div>
 
           <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+            <button type="button" id="btnModalBookView" class="btn btn-default" style="border-color: #8b5cf6; color: #6d28d9; background: #f5f3ff; font-size: 0.82rem; font-weight: 600;" title="선택된 일자들을 책 넘김 바인더 뷰어로 열람">
+              📖 책 넘김 뷰어로 열기
+            </button>
             <button type="button" id="btnModalBatchView" class="btn btn-default" style="border-color: #0284c7; color: #0284c7; font-size: 0.82rem; font-weight: 600;">
               👁️ 선택 일괄 열람
             </button>
@@ -595,6 +603,66 @@
       <div class="modal-footer" style="display: flex; justify-content: flex-end;">
         <button type="button" id="btnCloseSearchModalFooter" class="btn btn-default">닫기</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 책 넘김 바인더 뷰어 모달 (양면 펼침 Flipbook Viewer) -->
+  <!-- ============================================================ -->
+  <div id="bookViewerModal" class="book-modal-overlay" style="display: none;">
+    <!-- 뷰어 상단 툴바 -->
+    <div class="book-modal-toolbar">
+      <div class="book-toolbar-left">
+        <span class="book-toolbar-title">📖 운영기록부 책 넘김 바인더</span>
+        <span id="bookPageIndicator" class="book-page-badge">1 / 1</span>
+      </div>
+      <div class="book-toolbar-center">
+        <button type="button" id="btnBookPrevTop" class="btn btn-default book-nav-btn" title="이전 날짜 (단축키: ←)">◀ 이전 일자</button>
+        <select id="bookDateSelect" class="form-input book-date-select" title="조회할 일자 선택"></select>
+        <button type="button" id="btnBookNextTop" class="btn btn-default book-nav-btn" title="다음 날짜 (단축키: →)">다음 일자 ▶</button>
+      </div>
+      <div class="book-toolbar-right">
+        <button type="button" id="btnBookPrintCurrent" class="btn btn-success" style="font-size: 0.85rem;" title="현재 보고 있는 일자 인쇄">🖨️ 현재 일자 인쇄</button>
+        <button type="button" id="btnBookEditCurrent" class="btn btn-primary" style="font-size: 0.85rem;" title="이 일자를 메인 화면에서 수정">✏️ 편집하기</button>
+        <button type="button" id="btnCloseBookViewer" class="btn btn-default book-close-btn" title="닫기 (ESC)">✖</button>
+      </div>
+    </div>
+
+    <!-- 책 본체 스테이지 영역 -->
+    <div class="book-stage">
+      <!-- 좌측 플로팅 넘김 버튼 -->
+      <button type="button" id="btnBookPrevSide" class="book-floating-arrow book-floating-prev" title="이전 날짜 (단축키: ←)">❮</button>
+
+      <!-- 양면 펼침 바인더 본체 -->
+      <div id="bookSpread" class="book-binder-spread">
+        <!-- 좌측 페이지: 앞면 (배출시설 운영기록부) -->
+        <div id="bookLeftPage" class="book-page-wrapper book-page-left">
+          <!-- JS에서 동적 주입 -->
+        </div>
+
+        <!-- 중앙 바인더 스프링/링 힌지 -->
+        <div class="book-spine">
+          <div class="spine-ring"><span class="spine-hole-left"></span><span class="spine-metal-ring"></span><span class="spine-hole-right"></span></div>
+          <div class="spine-ring"><span class="spine-hole-left"></span><span class="spine-metal-ring"></span><span class="spine-hole-right"></span></div>
+          <div class="spine-ring"><span class="spine-hole-left"></span><span class="spine-metal-ring"></span><span class="spine-hole-right"></span></div>
+          <div class="spine-ring"><span class="spine-hole-left"></span><span class="spine-metal-ring"></span><span class="spine-hole-right"></span></div>
+          <div class="spine-ring"><span class="spine-hole-left"></span><span class="spine-metal-ring"></span><span class="spine-hole-right"></span></div>
+          <div class="spine-ring"><span class="spine-hole-left"></span><span class="spine-metal-ring"></span><span class="spine-hole-right"></span></div>
+        </div>
+
+        <!-- 우측 페이지: 뒷면 (자가측정 및 원료/연료 운영기록부) -->
+        <div id="bookRightPage" class="book-page-wrapper book-page-right">
+          <!-- JS에서 동적 주입 -->
+        </div>
+      </div>
+
+      <!-- 우측 플로팅 넘김 버튼 -->
+      <button type="button" id="btnBookNextSide" class="book-floating-arrow book-floating-next" title="다음 날짜 (단축키: →)">❯</button>
+    </div>
+
+    <!-- 하단 단축키 가이드 팁 -->
+    <div class="book-footer-tip">
+      💡 키보드 좌우 방향키(<strong>←</strong>, <strong>→</strong>)로 책장을 넘길 수 있습니다. (<strong>ESC</strong>: 바인더 닫기)
     </div>
   </div>
 

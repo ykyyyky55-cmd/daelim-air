@@ -89,6 +89,29 @@ document.addEventListener('DOMContentLoaded', () => {
   const signCanvas = document.getElementById('signCanvas');
   const ctx = signCanvas ? signCanvas.getContext('2d') : null;
 
+  /**
+   * 일자에 맞는 고해상도 벡터 전자도장 SVG Data URL 생성 함수
+   * @param {string} nameText 도장 중앙 이름 (예: '윤경용')
+   * @param {string} dateStr 날짜 문자열 (YYYY-MM-DD)
+   * @returns {string} SVG Data URL
+   */
+  function generateStampSvg(nameText, dateStr) {
+    const dStr = (dateStr || '').replace(/-/g, '.');
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="140" height="140" viewBox="0 0 140 140">
+      <!-- 외곽 굵은 원 -->
+      <circle cx="70" cy="70" r="63" fill="none" stroke="#dc2626" stroke-width="3.5" />
+      <!-- 안쪽 가는 원 -->
+      <circle cx="70" cy="70" r="57" fill="none" stroke="#dc2626" stroke-width="1.5" />
+      <!-- 상단 텍스트: 전자결재 -->
+      <text x="70" y="37" fill="#dc2626" font-family="'Noto Sans KR', sans-serif" font-weight="bold" font-size="13" text-anchor="middle">전자결재</text>
+      <!-- 중앙 이름: 윤경용 -->
+      <text x="70" y="78" fill="#dc2626" font-family="'Noto Sans KR', sans-serif" font-weight="bold" font-size="25" text-anchor="middle">${nameText}</text>
+      <!-- 하단 일자: YYYY.MM.DD -->
+      <text x="70" y="108" fill="#dc2626" font-family="'Noto Sans KR', sans-serif" font-weight="bold" font-size="11" text-anchor="middle">${dStr}</text>
+    </svg>`;
+    return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+  }
+
   // 전자결재 서명 상태 (Base64 이미지 문자열)
   let currentManagerSign = '';
   let currentTechnicianSign = '';
@@ -803,8 +826,9 @@ document.addEventListener('DOMContentLoaded', () => {
       engineerOpinion: '특이사항 없음. 정상 가동.',
       etc: '-',
       technician: { position: '부장', name: '윤 경 용' },
-      managerSign: '',
-      technicianSign: ''
+      // 일자에 맞춘 부서장 및 환경기술인 공식 전자결재 도장 자동 날인
+      managerSign: generateStampSvg('윤경용', targetDate),
+      technicianSign: generateStampSvg('윤경용', targetDate)
     };
 
     await applyRecordToUI(defaultRecord, true, targetDate);
@@ -1916,8 +1940,9 @@ document.addEventListener('DOMContentLoaded', () => {
             engineerOpinion: opinion,
             etc: '-',
             technician: { position: '부장', name: '윤 경 용' },
-            managerSign: '',
-            technicianSign: '',
+            // 일자에 맞춘 부서장 및 환경기술인 공식 전자결재 도장 자동 날인
+            managerSign: generateStampSvg('윤경용', curDateStr),
+            technicianSign: generateStampSvg('윤경용', curDateStr),
             updatedAt: new Date().toISOString()
           };
 
@@ -1947,9 +1972,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ============================================================
-  // 양식 렌더링 헬퍼 함수 (일괄 열람 및 인쇄 전용)
+  // 양식 렌더링 헬퍼 함수 (일괄 열람, 책 넘김 바인더 및 인쇄 전용)
   // ============================================================
-  function buildSheetsHtmlForRecord(record, isForPrint = false) {
+  function getRecordPagesHtml(record, isForPrint = false) {
     const pageClass = isForPrint ? 'batch-print-page' : 'a4-sheet';
     const dateFormatted = record.formattedDate || getFormattedDateString(record.date);
     const weather = record.weatherInfo ? record.weatherInfo.weather || '맑음' : '맑음';
@@ -2136,7 +2161,12 @@ document.addEventListener('DOMContentLoaded', () => {
       </article>
     `;
 
-    return frontHtml + backHtml;
+    return { frontHtml, backHtml };
+  }
+
+  function buildSheetsHtmlForRecord(record, isForPrint = false) {
+    const pages = getRecordPagesHtml(record, isForPrint);
+    return pages.frontHtml + pages.backHtml;
   }
 
   // ============================================================
@@ -2351,6 +2381,280 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnModalBatchExcel) btnModalBatchExcel.addEventListener('click', executeBatchExcel);
   if (btnBatchExcelCurrent) btnBatchExcelCurrent.addEventListener('click', executeBatchExcel);
+
+  // ============================================================
+  // 책 넘김 바인더 뷰어 (Flipbook / Binder Viewer) 로직
+  // ============================================================
+  const bookViewerModal = document.getElementById('bookViewerModal');
+  const bookPageIndicator = document.getElementById('bookPageIndicator');
+  const bookDateSelect = document.getElementById('bookDateSelect');
+  const btnBookPrevTop = document.getElementById('btnBookPrevTop');
+  const btnBookNextTop = document.getElementById('btnBookNextTop');
+  const btnBookPrevSide = document.getElementById('btnBookPrevSide');
+  const btnBookNextSide = document.getElementById('btnBookNextSide');
+  const btnCloseBookViewer = document.getElementById('btnCloseBookViewer');
+  const btnBookPrintCurrent = document.getElementById('btnBookPrintCurrent');
+  const btnBookEditCurrent = document.getElementById('btnBookEditCurrent');
+  const bookLeftPage = document.getElementById('bookLeftPage');
+  const bookRightPage = document.getElementById('bookRightPage');
+  const bookSpread = document.getElementById('bookSpread');
+  const btnOpenBookViewer = document.getElementById('btnOpenBookViewer');
+  const btnModalBookView = document.getElementById('btnModalBookView');
+
+  // 책 넘김 뷰어 상태 변수
+  let bookRecordList = []; // [{ date: '2026-09-01', data: {...} }, ...]
+  let bookCurrentIndex = 0;
+
+  // 요일 한글 변환 헬퍼 함수
+  function getKoreanDayOfWeek(dateStr) {
+    const days = ['일', '월', '화', '수', '목', '금', '토'];
+    const d = new Date(dateStr);
+    return days[d.getDay()] || '';
+  }
+
+  // 책 넘김 바인더 뷰어 열기
+  async function openBookViewer(specifiedDates = null, initialDate = null) {
+    if (!bookViewerModal) return;
+
+    let targetDates = [];
+
+    // 1. 대상 일자 목록 수집
+    if (specifiedDates && specifiedDates.length > 0) {
+      targetDates = [...specifiedDates].sort();
+    } else {
+      // 로컬 스토리지에 저장된 모든 운영기록 일자 추출
+      const datesSet = new Set();
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('daelim_air_record_')) {
+          datesSet.add(key.replace('daelim_air_record_', ''));
+        }
+      }
+
+      // Supabase 클라우드 기록 목록도 병합
+      if (window.SupabaseService && window.SupabaseService.isSupabaseConfigured()) {
+        try {
+          const supaList = await window.SupabaseService.fetchSupabaseRecords();
+          if (supaList && supaList.length > 0) {
+            supaList.forEach(r => datesSet.add(r.record_date));
+          }
+        } catch (err) {
+          console.warn('바인더 뷰어 Supabase 조회 예외:', err);
+        }
+      }
+
+      targetDates = Array.from(datesSet).sort();
+    }
+
+    if (targetDates.length === 0) {
+      alert('열람할 운영기록이 없습니다. 먼저 기록을 생성하거나 동기화해 주세요.');
+      return;
+    }
+
+    // 2. 각 일자의 전체 기록 데이터 수집
+    bookRecordList = [];
+    for (const dateStr of targetDates) {
+      let rec = null;
+      const localData = localStorage.getItem('daelim_air_record_' + dateStr);
+      if (localData) {
+        try {
+          rec = JSON.parse(localData);
+        } catch (e) {}
+      }
+
+      if (!rec && window.SupabaseService && window.SupabaseService.isSupabaseConfigured()) {
+        rec = await window.SupabaseService.fetchSupabaseRecordByDate(dateStr);
+      }
+
+      if (rec) {
+        bookRecordList.push({ date: dateStr, data: rec });
+      }
+    }
+
+    if (bookRecordList.length === 0) {
+      alert('운영기록 데이터를 불러올 수 없습니다.');
+      return;
+    }
+
+    // 3. 상단 날짜 선택 드롭다운 채우기
+    if (bookDateSelect) {
+      bookDateSelect.innerHTML = '';
+      bookRecordList.forEach((item, idx) => {
+        const opt = document.createElement('option');
+        opt.value = idx;
+        const holidayTag = item.data.isHoliday ? '🏖️ 휴무' : '⚡ 미가동/가동';
+        opt.textContent = `${item.date} (${getKoreanDayOfWeek(item.date)}) - ${holidayTag}`;
+        bookDateSelect.appendChild(opt);
+      });
+    }
+
+    // 4. 초기 펼칠 페이지 인덱스 설정
+    let startIdx = 0;
+    if (initialDate) {
+      const found = bookRecordList.findIndex(item => item.date === initialDate);
+      if (found !== -1) startIdx = found;
+    } else {
+      const curInputVal = recordDateInput.value;
+      const found = bookRecordList.findIndex(item => item.date === curInputVal);
+      if (found !== -1) startIdx = found;
+    }
+
+    bookCurrentIndex = startIdx;
+    renderBookSpread();
+
+    // 뷰어 모달 표시
+    bookViewerModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  // 양면 펼침 바인더 현재 페이지 렌더링
+  function renderBookSpread(animationDirection = null) {
+    if (!bookSpread || bookRecordList.length === 0) return;
+
+    const currentItem = bookRecordList[bookCurrentIndex];
+    if (!currentItem) return;
+
+    // 인디케이터 배지 및 드롭다운 동기화
+    if (bookPageIndicator) {
+      bookPageIndicator.textContent = `${bookCurrentIndex + 1} / ${bookRecordList.length}`;
+    }
+    if (bookDateSelect) {
+      bookDateSelect.value = bookCurrentIndex;
+    }
+
+    // 이전/다음 버튼 활성/비활성화 처리
+    const isFirst = bookCurrentIndex === 0;
+    const isLast = bookCurrentIndex === bookRecordList.length - 1;
+    if (btnBookPrevTop) btnBookPrevTop.disabled = isFirst;
+    if (btnBookNextTop) btnBookNextTop.disabled = isLast;
+    if (btnBookPrevSide) btnBookPrevSide.disabled = isFirst;
+    if (btnBookNextSide) btnBookNextSide.disabled = isLast;
+
+    // 책 넘김 3D 플립 애니메이션 적용
+    bookSpread.classList.remove('flip-animation-next', 'flip-animation-prev');
+    if (animationDirection === 'next') {
+      void bookSpread.offsetWidth; // 브라우저 리플로우 강제 트리거
+      bookSpread.classList.add('flip-animation-next');
+    } else if (animationDirection === 'prev') {
+      void bookSpread.offsetWidth;
+      bookSpread.classList.add('flip-animation-prev');
+    }
+
+    // 양면 서식 HTML 주입: 좌측(앞면: 배출시설 운영기록), 우측(뒷면: 자가측정 및 원료연료)
+    const pages = getRecordPagesHtml(currentItem.data, false);
+    if (bookLeftPage) {
+      bookLeftPage.innerHTML = pages.frontHtml;
+      bookLeftPage.scrollTop = 0;
+    }
+    if (bookRightPage) {
+      bookRightPage.innerHTML = pages.backHtml;
+      bookRightPage.scrollTop = 0;
+    }
+  }
+
+  // 이전/다음 페이지 탐색
+  function navigateBook(direction) {
+    if (direction === 'prev' && bookCurrentIndex > 0) {
+      bookCurrentIndex--;
+      renderBookSpread('prev');
+    } else if (direction === 'next' && bookCurrentIndex < bookRecordList.length - 1) {
+      bookCurrentIndex++;
+      renderBookSpread('next');
+    }
+  }
+
+  // 책 넘김 뷰어 닫기
+  function closeBookViewer() {
+    if (bookViewerModal) {
+      bookViewerModal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+  }
+
+  // 현재 보고 있는 일자 양식 인쇄 실행
+  function printBookCurrentRecord() {
+    if (bookRecordList.length === 0) return;
+    const currentItem = bookRecordList[bookCurrentIndex];
+    if (!currentItem) return;
+
+    // 일괄 인쇄용 컨테이너를 재활용하여 현재 일자 2페이지를 즉시 인쇄
+    const batchPrintContainer = document.getElementById('batchPrintContainer');
+    if (batchPrintContainer) {
+      batchPrintContainer.innerHTML = buildSheetsHtmlForRecord(currentItem.data, true);
+      document.body.classList.add('printing-batch');
+      window.print();
+      document.body.classList.remove('printing-batch');
+    }
+  }
+
+  // 현재 보고 있는 일자를 메인 편집기로 로드하고 뷰어 닫기
+  function editBookCurrentRecord() {
+    if (bookRecordList.length === 0) return;
+    const currentItem = bookRecordList[bookCurrentIndex];
+    if (!currentItem) return;
+
+    const targetDate = currentItem.date;
+    closeBookViewer();
+    recordDateInput.value = targetDate;
+    loadRecord(targetDate);
+  }
+
+  // 이벤트 리스너 등록
+  if (btnBookPrevTop) btnBookPrevTop.addEventListener('click', () => navigateBook('prev'));
+  if (btnBookNextTop) btnBookNextTop.addEventListener('click', () => navigateBook('next'));
+  if (btnBookPrevSide) btnBookPrevSide.addEventListener('click', () => navigateBook('prev'));
+  if (btnBookNextSide) btnBookNextSide.addEventListener('click', () => navigateBook('next'));
+  if (btnCloseBookViewer) btnCloseBookViewer.addEventListener('click', closeBookViewer);
+  if (btnBookPrintCurrent) btnBookPrintCurrent.addEventListener('click', printBookCurrentRecord);
+  if (btnBookEditCurrent) btnBookEditCurrent.addEventListener('click', editBookCurrentRecord);
+
+  if (bookDateSelect) {
+    bookDateSelect.addEventListener('change', (e) => {
+      const newIdx = parseInt(e.target.value, 10);
+      if (!isNaN(newIdx) && newIdx >= 0 && newIdx < bookRecordList.length) {
+        const dir = newIdx > bookCurrentIndex ? 'next' : 'prev';
+        bookCurrentIndex = newIdx;
+        renderBookSpread(dir);
+      }
+    });
+  }
+
+  // 키보드 좌우 화살표키 책장 넘김 및 ESC 닫기 단축키
+  window.addEventListener('keydown', (e) => {
+    if (bookViewerModal && bookViewerModal.style.display === 'flex') {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        navigateBook('prev');
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        navigateBook('next');
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closeBookViewer();
+      }
+    }
+  });
+
+  // 헤더 [📖 책 넘김 뷰어] 버튼 클릭 이벤트
+  if (btnOpenBookViewer) {
+    btnOpenBookViewer.addEventListener('click', () => {
+      openBookViewer(null, recordDateInput.value);
+    });
+  }
+
+  // 검색 모달 내 [📖 책 넘김 뷰어로 열기] 버튼 클릭 이벤트
+  if (btnModalBookView) {
+    btnModalBookView.addEventListener('click', () => {
+      const checkedBoxes = document.querySelectorAll('.record-checkbox:checked');
+      if (checkedBoxes.length === 0) {
+        alert('책 넘김 뷰어로 열람할 일자를 하나 이상 선택해 주세요.');
+        return;
+      }
+      const selectedDates = Array.from(checkedBoxes).map(cb => cb.dataset.date).sort();
+      closeSearchModal();
+      openBookViewer(selectedDates, selectedDates[0]);
+    });
+  }
 
   // 초기 로딩 (오늘 날짜)
   const todayStr = new Date().toISOString().split('T')[0];
