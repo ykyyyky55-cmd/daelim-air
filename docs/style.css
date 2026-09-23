@@ -1061,21 +1061,21 @@ body {
   color: #ffffff !important;
 }
 
-/* 책 본체 스테이지 영역 */
+/* 책 본체 스테이지 영역 (인쇄 원본 듀얼 페이지 뷰) */
 .book-stage {
   flex: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   position: relative;
-  padding: 16px 70px 32px 70px;
+  padding: 24px 70px 40px 70px;
   overflow: auto;
-  perspective: 2500px;
+  background: #0f172a;
 }
 
 /* 좌우 플로팅 이전/다음 화살표 버튼 */
 .book-floating-arrow {
-  position: absolute;
+  position: fixed;
   top: 50%;
   transform: translateY(-50%);
   width: 54px;
@@ -1088,142 +1088,94 @@ body {
   font-weight: 300;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 25;
+  z-index: 35;
   display: flex;
   align-items: center;
   justify-content: center;
   backdrop-filter: blur(6px);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
 }
 
 .book-floating-prev {
-  left: 16px;
+  left: 20px;
 }
 
 .book-floating-next {
-  right: 16px;
+  right: 20px;
 }
 
 .book-floating-arrow:hover:not(:disabled) {
   background: rgba(255, 255, 255, 0.35);
   border-color: #ffffff;
   transform: translateY(-50%) scale(1.1);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
 }
 
 .book-floating-arrow:disabled {
-  opacity: 0.25;
+  opacity: 0.2;
   cursor: not-allowed;
 }
 
-/* 양면 펼침 바인더 본체 */
+/* 양면 펼침 뷰어 본체 (가운데 바인더 없는 순수 인쇄 원본 A4 듀얼 뷰) */
 .book-binder-spread {
   display: flex;
   position: relative;
-  background: #cbd5e1;
-  border-radius: 12px;
-  box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.15);
-  max-width: 96vw;
-  max-height: 86vh;
+  background: transparent;
+  box-shadow: none;
+  border: none;
+  border-radius: 0;
+  gap: 28px;
+  justify-content: center;
+  align-items: flex-start;
   transition: transform 0.3s ease, opacity 0.25s ease;
   user-select: text;
 }
 
 /* 플립 애니메이션 클래스 */
 .book-binder-spread.flip-animation-next {
-  animation: bookPageTurnNext 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: bookPageTurnNext 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .book-binder-spread.flip-animation-prev {
-  animation: bookPageTurnPrev 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: bookPageTurnPrev 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes bookPageTurnNext {
-  0% { transform: scale(1) rotateY(0deg); }
-  50% { transform: scale(0.97) rotateY(-4deg); opacity: 0.75; }
-  100% { transform: scale(1) rotateY(0deg); opacity: 1; }
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(0.98); opacity: 0.6; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 @keyframes bookPageTurnPrev {
-  0% { transform: scale(1) rotateY(0deg); }
-  50% { transform: scale(0.97) rotateY(4deg); opacity: 0.75; }
-  100% { transform: scale(1) rotateY(0deg); opacity: 1; }
+  0% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(0.98); opacity: 0.6; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
-/* 각 페이지 컨테이너 */
+/* 각 페이지 컨테이너: 인쇄 원본 규격 1:1 보존 */
 .book-page-wrapper {
-  width: 46vw;
-  max-width: 720px;
-  height: 84vh;
-  max-height: 1040px;
-  overflow-y: auto;
-  background: #ffffff;
-  padding: 16px 20px;
-  box-sizing: border-box;
-  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.04);
+  width: auto;
+  max-width: none;
+  height: auto;
+  max-height: none;
+  overflow: visible;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  border: none;
+  box-shadow: none;
 }
 
-.book-page-left {
-  border-radius: 10px 0 0 10px;
-  border-right: 1px solid #e2e8f0;
-}
-
-.book-page-right {
-  border-radius: 0 10px 10px 0;
-  border-left: 1px solid #e2e8f0;
-}
-
-/* 중앙 바인더 제본 링 및 힌지 */
-.book-spine {
-  width: 36px;
-  background: linear-gradient(90deg, #64748b 0%, #cbd5e1 30%, #f1f5f9 50%, #cbd5e1 70%, #64748b 100%);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-evenly;
-  align-items: center;
-  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.45);
-  z-index: 10;
-  flex-shrink: 0;
-  position: relative;
-}
-
-.spine-ring {
-  width: 100%;
-  height: 24px;
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.spine-hole-left {
-  position: absolute;
-  left: -6px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #0f172a;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.7);
-}
-
-.spine-hole-right {
-  position: absolute;
-  right: -6px;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #0f172a;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.7);
-}
-
-.spine-metal-ring {
-  width: 44px;
-  height: 12px;
-  border-radius: 6px;
-  background: linear-gradient(180deg, #f8fafc 0%, #94a3b8 40%, #475569 80%, #1e293b 100%);
-  border: 1px solid #475569;
-  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
-  z-index: 12;
+/* 인쇄되는 모습 그대로: A4 실물 크기 및 완벽한 인쇄 서식 반영 */
+.book-page-wrapper .a4-sheet {
+  width: 210mm !important;
+  min-height: 297mm !important;
+  box-sizing: border-box !important;
+  background: #ffffff !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 2px !important;
+  padding: 24mm 14mm 12mm 14mm !important;
 }
 
 /* 하단 키보드 단축키 및 페이지 이동 바 */

@@ -2615,12 +2615,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const pages = getRecordPagesHtml(currentItem.data, false);
     if (bookLeftPage) {
       bookLeftPage.innerHTML = pages.frontHtml;
-      bookLeftPage.scrollTop = 0;
     }
     if (bookRightPage) {
       bookRightPage.innerHTML = pages.backHtml;
-      bookRightPage.scrollTop = 0;
     }
+
+    const bookStage = document.querySelector('.book-stage');
+    if (bookStage) bookStage.scrollTop = 0;
   }
 
   // 이전/다음 페이지 탐색
