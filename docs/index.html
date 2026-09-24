@@ -863,7 +863,30 @@
   <!-- Supabase 연동 클라이언트 스크립트 -->
   <script src="supabaseClient.js"></script>
   <!-- 프론트엔드 비즈니스 로직 스크립트 (ES 모듈 진입점, 세부 기능은 js/ 폴더) -->
-  <!-- ?v= 값은 배포 시 브라우저 캐시를 무효화하기 위한 버전입니다. app.js를 수정하면 함께 올려주세요. -->
-  <script type="module" src="app.js?v=20260924-1"></script>
+  <!-- ?v= 값은 배포 시 브라우저 캐시를 무효화하기 위한 버전입니다.
+       app.js 또는 js/ 모듈을 수정하면 아래 import map과 app.js 태그의 버전을 모두 같은 값으로 올려주세요.
+       (같은 모듈이 서로 다른 버전 URL로 import되면 모듈이 두 번 로드되어 공유 상태가 갈라집니다) -->
+  <script type="importmap">
+  {
+    "imports": {
+      "./js/bookViewer.js": "./js/bookViewer.js?v=20260924-2",
+      "./js/dom.js": "./js/dom.js?v=20260924-2",
+      "./js/editor.js": "./js/editor.js?v=20260924-2",
+      "./js/excel.js": "./js/excel.js?v=20260924-2",
+      "./js/home.js": "./js/home.js?v=20260924-2",
+      "./js/recordStore.js": "./js/recordStore.js?v=20260924-2",
+      "./js/recordTemplate.js": "./js/recordTemplate.js?v=20260924-2",
+      "./js/saveStatus.js": "./js/saveStatus.js?v=20260924-2",
+      "./js/search.js": "./js/search.js?v=20260924-2",
+      "./js/signature.js": "./js/signature.js?v=20260924-2",
+      "./js/state.js": "./js/state.js?v=20260924-2",
+      "./js/supabaseSettings.js": "./js/supabaseSettings.js?v=20260924-2",
+      "./js/tables.js": "./js/tables.js?v=20260924-2",
+      "./js/utils.js": "./js/utils.js?v=20260924-2",
+      "./js/weather.js": "./js/weather.js?v=20260924-2"
+    }
+  }
+  </script>
+  <script type="module" src="app.js?v=20260924-2"></script>
 </body>
 </html>
