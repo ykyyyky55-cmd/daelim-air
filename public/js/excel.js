@@ -233,7 +233,7 @@ export async function executeBatchExcel() {
     sheet.getCell(`A${rIdx}`).alignment = { horizontal: 'center' };
     rIdx += 2;
 
-    sheet.mergeCells('A${rIdx}:P${rIdx}'); sheet.getCell(`A${rIdx}`).value = '3. 환경기술인 의견 및 특이사항'; sheet.getCell(`A${rIdx}`).font = { bold: true };
+    sheet.mergeCells(`A${rIdx}:P${rIdx}`); sheet.getCell(`A${rIdx}`).value = '3. 환경기술인 의견 및 특이사항'; sheet.getCell(`A${rIdx}`).font = { bold: true };
     rIdx++;
     sheet.mergeCells(`A${rIdx}:P${rIdx}`); sheet.getCell(`A${rIdx}`).value = data.engineerOpinion || (data.isHoliday ? '휴무' : '미가동');
 
