@@ -3,6 +3,7 @@ import { loadRecord } from './editor.js';
 import { fetchAllAvailableRecords } from './recordStore.js';
 import { openBookViewer } from './bookViewer.js';
 import { openSearchModal } from './search.js';
+import { toLocalDateString } from './utils.js';
 
 // ============================================================
 // 홈 화면 (Home Portal Dashboard) 및 화면 전환 네비게이션 로직
@@ -51,7 +52,7 @@ export function showEditorScreen(targetDate = null) {
   document.body.style.overflow = '';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 
-  const dateToLoad = targetDate || recordDateInput.value || new Date().toISOString().split('T')[0];
+  const dateToLoad = targetDate || recordDateInput.value || toLocalDateString();
   recordDateInput.value = dateToLoad;
   loadRecord(dateToLoad);
 }
@@ -62,7 +63,7 @@ export async function updateHomePortalStats() {
   const allRecords = await fetchAllAvailableRecords();
   const sortedDates = allRecords.map(r => r.date).sort();
   const count = sortedDates.length;
-  const latest = sortedDates.length > 0 ? sortedDates[sortedDates.length - 1] : new Date().toISOString().split('T')[0];
+  const latest = sortedDates.length > 0 ? sortedDates[sortedDates.length - 1] : toLocalDateString();
 
   if (statTotalCount) statTotalCount.textContent = `${count} 일`;
   if (statLatestDate) statLatestDate.textContent = latest;
@@ -97,7 +98,7 @@ export function bindHomeEvents() {
   // 2. 홈 카드: [✍️ 운영기록부 작성 / 편집]
   if (btnGoEditorToday) {
     btnGoEditorToday.addEventListener('click', () => {
-      showEditorScreen(new Date().toISOString().split('T')[0]);
+      showEditorScreen(toLocalDateString());
     });
   }
 

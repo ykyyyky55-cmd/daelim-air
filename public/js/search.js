@@ -1,6 +1,6 @@
 import { recordDateInput } from './dom.js';
 import { loadRecord } from './editor.js';
-import { generateStampSvg, getFormattedDateString } from './utils.js';
+import { generateStampSvg, getFormattedDateString, toLocalDateString } from './utils.js';
 import { fetchAllAvailableRecords } from './recordStore.js';
 import { buildSheetsHtmlForRecord } from './recordTemplate.js';
 import { openBookViewer } from './bookViewer.js';
@@ -322,7 +322,7 @@ export function bindSearchEvents() {
         const end = new Date(endDate + 'T00:00:00');
 
         for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-          const curDateStr = d.toISOString().split('T')[0];
+          const curDateStr = toLocalDateString(d);
           const dayOfWeek = d.getDay();
           const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
           const defaultNote = isWeekend ? '휴무' : '미가동';

@@ -23,6 +23,14 @@ export function generateStampSvg(nameText, dateStr) {
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
 }
 
+// Date를 로컬(KST) 기준 'YYYY-MM-DD' 문자열로 변환 (toISOString은 UTC라 하루 밀림)
+export function toLocalDateString(d = new Date()) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 // 날짜 문자열(YYYY-MM-DD)을 'YYYY년 M월 D일 O요일' 포맷으로 변환
 export function getFormattedDateString(dateStr) {
   const d = new Date(dateStr + 'T00:00:00');

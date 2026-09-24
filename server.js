@@ -408,6 +408,14 @@ app.post('/api/trigger-daily-auto', async (req, res) => {
   }
 });
 
+// Date를 로컬 기준 'YYYY-MM-DD' 문자열로 변환 (toISOString은 UTC라 KST에서 하루 밀림)
+function toLocalDateString(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 // 기간별 일괄 자동작성 트리거 API
 app.post('/api/records/batch-generate', async (req, res) => {
   const { startDate, endDate } = req.body;
@@ -421,7 +429,7 @@ app.post('/api/records/batch-generate', async (req, res) => {
     const results = [];
 
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      const curDateStr = d.toISOString().split('T')[0];
+      const curDateStr = toLocalDateString(d);
       const rec = await autoCreateDailyRecord(curDateStr);
       results.push({ date: curDateStr, status: rec.status });
     }

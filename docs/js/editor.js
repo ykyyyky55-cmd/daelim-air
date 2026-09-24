@@ -8,7 +8,7 @@ import {
   fuelUsageInput, rawMaterialUsageInput, opinionInput, etcInput, technicianPosition, technicianName
 } from './dom.js';
 import { markUnsaved, markSaved } from './saveStatus.js';
-import { generateStampSvg, getFormattedDateString } from './utils.js';
+import { generateStampSvg, getFormattedDateString, toLocalDateString } from './utils.js';
 import { renderExhaustTable, renderPreventionOpTable, renderMaintenanceTable, renderMeasurementTable } from './tables.js';
 import { renderSignatures } from './signature.js';
 import { fetchWolgotWeather } from './weather.js';
@@ -347,7 +347,7 @@ export async function saveCurrentRecord() {
 export function changeDateByOffset(offsetDays) {
   const current = new Date(recordDateInput.value + 'T00:00:00');
   current.setDate(current.getDate() + offsetDays);
-  const newDateStr = current.toISOString().split('T')[0];
+  const newDateStr = toLocalDateString(current);
   recordDateInput.value = newDateStr;
   loadRecord(newDateStr);
 }
@@ -410,7 +410,7 @@ export function bindEditorEvents() {
   btnPrevDate.addEventListener('click', () => changeDateByOffset(-1));
   btnNextDate.addEventListener('click', () => changeDateByOffset(1));
   btnToday.addEventListener('click', () => {
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = toLocalDateString();
     recordDateInput.value = todayStr;
     loadRecord(todayStr);
   });
