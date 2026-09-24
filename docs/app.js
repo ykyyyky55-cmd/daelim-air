@@ -2613,7 +2613,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ============================================================
-  // 책 넘김 바인더 뷰어 (Flipbook / Binder Viewer) 로직
+  // ============================================================
+  // 책 넘김 바인더 뷰어 (Flipbook / Binder Viewer) 로직 & 5대 추가 기능
   // ============================================================
   const bookViewerModal = document.getElementById('bookViewerModal');
   const bookPageIndicator = document.getElementById('bookPageIndicator');
@@ -2628,6 +2629,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnBookNextBottom = document.getElementById('btnBookNextBottom');
   const btnCloseBookViewer = document.getElementById('btnCloseBookViewer');
   const btnBookPrintCurrent = document.getElementById('btnBookPrintCurrent');
+  const btnBookPrintAll = document.getElementById('btnBookPrintAll');
   const btnBookEditCurrent = document.getElementById('btnBookEditCurrent');
   const bookLeftPage = document.getElementById('bookLeftPage');
   const bookRightPage = document.getElementById('bookRightPage');
@@ -2635,15 +2637,255 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnOpenBookViewer = document.getElementById('btnOpenBookViewer');
   const btnModalBookView = document.getElementById('btnModalBookView');
 
+  // 신규 추가 기능 컨트롤 요소
+  const btnBookThumbnails = document.getElementById('btnBookThumbnails');
+  const bookThumbnailDrawer = document.getElementById('bookThumbnailDrawer');
+  const btnCloseThumbnailDrawer = document.getElementById('btnCloseThumbnailDrawer');
+  const inputThumbnailSearch = document.getElementById('inputThumbnailSearch');
+  const bookThumbnailList = document.getElementById('bookThumbnailList');
+
+  const btnBookViewMode = document.getElementById('btnBookViewMode');
+  const singlePageToggleBar = document.getElementById('singlePageToggleBar');
+
+  const btnBookZoomOut = document.getElementById('btnBookZoomOut');
+  const btnBookZoomFit = document.getElementById('btnBookZoomFit');
+  const btnBookZoomIn = document.getElementById('btnBookZoomIn');
+  const btnBookZoomReset = document.getElementById('btnBookZoomReset');
+  const btnBookFullscreen = document.getElementById('btnBookFullscreen');
+
   // 책 넘김 뷰어 상태 변수
   let bookRecordList = []; // [{ date: '2026-09-01', data: {...} }, ...]
   let bookCurrentIndex = 0;
+  let bookZoomLevel = 1.0;
+  let isBookFitMode = true;
+  let isSinglePageMode = false;
+  let singlePageSheet = 'front'; // 'front' | 'back'
+  let isThumbnailDrawerOpen = false;
 
   // 요일 한글 변환 헬퍼 함수
   function getKoreanDayOfWeek(dateStr) {
     const days = ['일', '월', '화', '수', '목', '금', '토'];
     const d = new Date(dateStr);
     return days[d.getDay()] || '';
+  }
+
+  // 1. 줌 & 화면 맞춤 제어 함수
+  function applyBookZoom() {
+    if (!bookSpread) return;
+
+    if (isBookFitMode) {
+      const bookStage = document.getElementById('bookStage') || document.querySelector('.book-stage');
+      if (bookStage) {
+        const stageW = bookStage.clientWidth - (isThumbnailDrawerOpen ? 340 : 120);
+        const stageH = bookStage.clientHeight - 40;
+        const targetW = isSinglePageMode ? 820 : 1660; // A4 단면 vs 양면 펼침 기준 폭
+        const targetH = 1140; // A4 높이 기준
+
+        const scaleW = stageW / targetW;
+        const scaleH = stageH / targetH;
+        bookZoomLevel = Math.min(scaleW, scaleH);
+        bookZoomLevel = Math.max(0.35, Math.min(1.4, bookZoomLevel));
+      }
+    }
+
+    bookSpread.style.transform = `scale(${bookZoomLevel.toFixed(3)})`;
+    bookSpread.style.transformOrigin = 'top center';
+
+    if (btnBookZoomFit) {
+      btnBookZoomFit.classList.toggle('active', isBookFitMode);
+    }
+    if (btnBookZoomReset) {
+      btnBookZoomReset.classList.toggle('active', !isBookFitMode && Math.abs(bookZoomLevel - 1.0) < 0.05);
+    }
+  }
+
+  function setZoom(level) {
+    isBookFitMode = false;
+    bookZoomLevel = Math.max(0.35, Math.min(2.0, level));
+    applyBookZoom();
+  }
+
+  // 2. 단면 / 양면 보기 전환 토글 함수
+  function toggleBookViewMode() {
+    isSinglePageMode = !isSinglePageMode;
+    if (btnBookViewMode) {
+      btnBookViewMode.innerHTML = isSinglePageMode ? '📄 단면 보기' : '📖 양면 보기';
+      btnBookViewMode.classList.toggle('active', isSinglePageMode);
+    }
+    if (singlePageToggleBar) {
+      singlePageToggleBar.style.display = isSinglePageMode ? 'flex' : 'none';
+    }
+    const bookStage = document.getElementById('bookStage');
+    if (bookStage) {
+      bookStage.classList.toggle('book-single-mode', isSinglePageMode);
+    }
+
+    updateSinglePageVisibility();
+    applyBookZoom();
+  }
+
+  function updateSinglePageVisibility() {
+    if (!isSinglePageMode) {
+      if (bookLeftPage) bookLeftPage.classList.remove('hidden-in-single');
+      if (bookRightPage) bookRightPage.classList.remove('hidden-in-single');
+      return;
+    }
+
+    if (singlePageSheet === 'front') {
+      if (bookLeftPage) bookLeftPage.classList.remove('hidden-in-single');
+      if (bookRightPage) bookRightPage.classList.add('hidden-in-single');
+    } else {
+      if (bookLeftPage) bookLeftPage.classList.add('hidden-in-single');
+      if (bookRightPage) bookRightPage.classList.remove('hidden-in-single');
+    }
+
+    const singleTabs = document.querySelectorAll('.btn-single-sheet-tab');
+    singleTabs.forEach(tab => {
+      tab.classList.toggle('active', tab.dataset.sheet === singlePageSheet);
+    });
+  }
+
+  // 3. 전체화면 전환 토글 함수
+  function toggleBookFullscreen() {
+    if (!document.fullscreenElement) {
+      if (bookViewerModal.requestFullscreen) {
+        bookViewerModal.requestFullscreen();
+      } else if (bookViewerModal.webkitRequestFullscreen) {
+        bookViewerModal.webkitRequestFullscreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  }
+
+  // 4. 썸네일 목차 서랍 패널 렌더링 및 토글
+  function renderThumbnailDrawer(searchFilter = '') {
+    if (!bookThumbnailList) return;
+    const filter = (searchFilter || '').trim().toLowerCase();
+
+    const filtered = bookRecordList.map((item, idx) => ({ ...item, idx })).filter(item => {
+      if (!filter) return true;
+      const tag = item.data.isHoliday ? '휴무' : (item.data.status === 'NORMAL' ? '가동' : '미가동');
+      const text = `${item.date} ${getKoreanDayOfWeek(item.date)} ${tag} ${item.data.holidayReason || ''}`.toLowerCase();
+      return text.includes(filter);
+    });
+
+    if (filtered.length === 0) {
+      bookThumbnailList.innerHTML = `<div style="text-align:center; padding:30px 10px; color:#94a3b8; font-size:0.85rem;">검색 결과가 없습니다.</div>`;
+      return;
+    }
+
+    bookThumbnailList.innerHTML = filtered.map(item => {
+      const isActive = item.idx === bookCurrentIndex;
+      const holidayClass = item.data.isHoliday ? 'holiday' : (item.data.status === 'NORMAL' ? 'normal' : 'idle');
+      const holidayTag = item.data.isHoliday ? '🏖️ 휴무' : (item.data.status === 'NORMAL' ? '🟢 가동' : '⚡ 미가동');
+      const dayName = getKoreanDayOfWeek(item.date);
+
+      return `
+        <div class="book-thumb-item ${isActive ? 'active' : ''}" data-index="${item.idx}">
+          <div class="book-thumb-top">
+            <span class="book-thumb-date">${item.date} (${dayName})</span>
+            <span class="book-thumb-badge ${holidayClass}">${holidayTag}</span>
+          </div>
+          <div class="book-thumb-bottom">
+            <span>페이지 ${item.idx + 1} / ${bookRecordList.length}</span>
+            <span style="color:#64748b;">${item.data.isHoliday ? (item.data.holidayReason || '휴무') : (item.data.workHours || '09:00~18:00')}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    bookThumbnailList.querySelectorAll('.book-thumb-item').forEach(el => {
+      el.addEventListener('click', () => {
+        const idx = parseInt(el.getAttribute('data-index'), 10);
+        if (!isNaN(idx)) {
+          const dir = idx > bookCurrentIndex ? 'next' : 'prev';
+          bookCurrentIndex = idx;
+          renderBookSpread(dir);
+          highlightActiveThumbnail();
+        }
+      });
+    });
+  }
+
+  function highlightActiveThumbnail() {
+    if (!bookThumbnailList) return;
+    bookThumbnailList.querySelectorAll('.book-thumb-item').forEach(el => {
+      const idx = parseInt(el.getAttribute('data-index'), 10);
+      el.classList.toggle('active', idx === bookCurrentIndex);
+    });
+  }
+
+  function toggleThumbnailDrawer() {
+    isThumbnailDrawerOpen = !isThumbnailDrawerOpen;
+    if (bookThumbnailDrawer) {
+      bookThumbnailDrawer.classList.toggle('hidden', !isThumbnailDrawerOpen);
+    }
+    if (btnBookThumbnails) {
+      btnBookThumbnails.classList.toggle('active', isThumbnailDrawerOpen);
+    }
+    if (isThumbnailDrawerOpen) {
+      renderThumbnailDrawer(inputThumbnailSearch ? inputThumbnailSearch.value : '');
+    }
+    setTimeout(applyBookZoom, 200);
+  }
+
+  // 5. 인쇄 및 PDF 저장 함수
+  function printBookCurrentRecord() {
+    if (bookRecordList.length === 0) return;
+    const currentItem = bookRecordList[bookCurrentIndex];
+    if (!currentItem) return;
+
+    let printArea = document.getElementById('bookPrintArea');
+    if (!printArea) {
+      printArea = document.createElement('div');
+      printArea.id = 'bookPrintArea';
+      document.body.appendChild(printArea);
+    }
+
+    const pages = getRecordPagesHtml(currentItem.data, true);
+    printArea.innerHTML = pages.frontHtml + pages.backHtml;
+
+    document.body.classList.add('printing-book');
+    window.print();
+    setTimeout(() => {
+      document.body.classList.remove('printing-book');
+      if (printArea) printArea.innerHTML = '';
+    }, 500);
+  }
+
+  function printAllBookPages() {
+    if (bookRecordList.length === 0) {
+      alert('인쇄할 운영기록이 없습니다.');
+      return;
+    }
+
+    const count = bookRecordList.length;
+    const confirmMsg = `총 ${count}개 일자의 운영기록부(총 ${count * 2}페이지)를 일괄 인쇄(PDF 저장)하시겠습니까?\n\n(브라우저 인쇄 창에서 대상을 'PDF로 저장'으로 선택하시면 단일 PDF 파일로 저장됩니다)`;
+    if (!confirm(confirmMsg)) return;
+
+    let printArea = document.getElementById('bookPrintArea');
+    if (!printArea) {
+      printArea = document.createElement('div');
+      printArea.id = 'bookPrintArea';
+      document.body.appendChild(printArea);
+    }
+
+    let allHtml = '';
+    for (const item of bookRecordList) {
+      const pages = getRecordPagesHtml(item.data, true);
+      allHtml += pages.frontHtml + pages.backHtml;
+    }
+
+    printArea.innerHTML = allHtml;
+    document.body.classList.add('printing-book');
+    window.print();
+    setTimeout(() => {
+      document.body.classList.remove('printing-book');
+      if (printArea) printArea.innerHTML = '';
+    }, 1000);
   }
 
   // 책 넘김 바인더 뷰어 열기
@@ -2733,11 +2975,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     bookCurrentIndex = startIdx;
+    isBookFitMode = true;
     renderBookSpread();
 
-    // 뷰어 모달 표시
+    // 뷰어 모달 표시 및 초기 줌 자동 계산
     bookViewerModal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
+    setTimeout(applyBookZoom, 150);
   }
 
   // 양면 펼침 바인더 현재 페이지 렌더링
@@ -2766,7 +3010,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 책 넘김 3D 플립 애니메이션 적용
     bookSpread.classList.remove('flip-animation-next', 'flip-animation-prev');
     if (animationDirection === 'next') {
-      void bookSpread.offsetWidth; // 브라우저 리플로우 강제 트리거
+      void bookSpread.offsetWidth;
       bookSpread.classList.add('flip-animation-next');
     } else if (animationDirection === 'prev') {
       void bookSpread.offsetWidth;
@@ -2782,7 +3026,10 @@ document.addEventListener('DOMContentLoaded', () => {
       bookRightPage.innerHTML = pages.backHtml;
     }
 
-    const bookStage = document.querySelector('.book-stage');
+    updateSinglePageVisibility();
+    highlightActiveThumbnail();
+
+    const bookStage = document.getElementById('bookStage') || document.querySelector('.book-stage');
     if (bookStage) bookStage.scrollTop = 0;
   }
 
@@ -2802,22 +3049,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (bookViewerModal) {
       bookViewerModal.style.display = 'none';
       document.body.style.overflow = '';
-    }
-  }
-
-  // 현재 보고 있는 일자 양식 인쇄 실행 (A4 인쇄 모드)
-  function printBookCurrentRecord() {
-    if (bookRecordList.length === 0) return;
-    const currentItem = bookRecordList[bookCurrentIndex];
-    if (!currentItem) return;
-
-    // 일괄 인쇄용 컨테이너를 재활용하여 현재 일자 2페이지를 즉시 인쇄
-    const batchPrintContainer = document.getElementById('batchPrintContainer');
-    if (batchPrintContainer) {
-      batchPrintContainer.innerHTML = buildSheetsHtmlForRecord(currentItem.data, true);
-      document.body.classList.add('printing-batch');
-      window.print();
-      document.body.classList.remove('printing-batch');
+      if (document.fullscreenElement) {
+        try { document.exitFullscreen(); } catch (e) {}
+      }
     }
   }
 
@@ -2842,7 +3076,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (btnCloseBookViewer) btnCloseBookViewer.addEventListener('click', closeBookViewer);
   if (btnBookPrintCurrent) btnBookPrintCurrent.addEventListener('click', printBookCurrentRecord);
+  if (btnBookPrintAll) btnBookPrintAll.addEventListener('click', printAllBookPages);
   if (btnBookEditCurrent) btnBookEditCurrent.addEventListener('click', editBookCurrentRecord);
+
+  // 줌 컨트롤 리스너
+  if (btnBookZoomOut) btnBookZoomOut.addEventListener('click', () => setZoom(bookZoomLevel - 0.1));
+  if (btnBookZoomIn) btnBookZoomIn.addEventListener('click', () => setZoom(bookZoomLevel + 0.1));
+  if (btnBookZoomReset) btnBookZoomReset.addEventListener('click', () => setZoom(1.0));
+  if (btnBookZoomFit) btnBookZoomFit.addEventListener('click', () => { isBookFitMode = true; applyBookZoom(); });
+
+  // 단면/양면 보기 토글 및 단면 탭 리스너
+  if (btnBookViewMode) btnBookViewMode.addEventListener('click', toggleBookViewMode);
+  document.querySelectorAll('.btn-single-sheet-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      singlePageSheet = tab.dataset.sheet || 'front';
+      updateSinglePageVisibility();
+    });
+  });
+
+  // 전체화면 토글 리스너
+  if (btnBookFullscreen) btnBookFullscreen.addEventListener('click', toggleBookFullscreen);
+  document.addEventListener('fullscreenchange', () => {
+    if (btnBookFullscreen) {
+      const isFs = !!document.fullscreenElement;
+      btnBookFullscreen.innerHTML = isFs ? '⛶ 창모드' : '⛶ 전체화면';
+      btnBookFullscreen.classList.toggle('active', isFs);
+    }
+    setTimeout(applyBookZoom, 150);
+  });
+
+  // 썸네일 목차 서랍 리스너
+  if (btnBookThumbnails) btnBookThumbnails.addEventListener('click', toggleThumbnailDrawer);
+  if (btnCloseThumbnailDrawer) btnCloseThumbnailDrawer.addEventListener('click', toggleThumbnailDrawer);
+  if (inputThumbnailSearch) {
+    inputThumbnailSearch.addEventListener('input', (e) => {
+      renderThumbnailDrawer(e.target.value);
+    });
+  }
+
+  // 창 크기 변경 시 맞춤 줌 자동 재계산
+  window.addEventListener('resize', () => {
+    if (bookViewerModal && bookViewerModal.style.display === 'flex' && isBookFitMode) {
+      applyBookZoom();
+    }
+  });
 
   // 책 뷰어 상단 [🏠 홈으로] 버튼
   if (btnBookBackHome) {

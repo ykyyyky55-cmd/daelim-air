@@ -761,23 +761,70 @@
         <button type="button" id="btnBookBackHome" class="btn btn-default" style="font-size: 0.85rem; background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.3);" title="홈 포털 대시보드로 돌아가기">
           🏠 홈으로
         </button>
+        <!-- 썸네일 목차 서랍 열기 버튼 -->
+        <button type="button" id="btnBookThumbnails" class="btn btn-default" style="font-size: 0.85rem; background: rgba(255,255,255,0.15); color: #fff; border-color: rgba(255,255,255,0.3);" title="전체 일자 썸네일 목차 열기/닫기">
+          📑 썸네일 목차
+        </button>
         <span class="book-toolbar-title">📖 운영기록부 책 넘김 바인더</span>
         <span id="bookPageIndicator" class="book-page-badge">1 / 1</span>
       </div>
       <div class="book-toolbar-center">
-        <button type="button" id="btnBookPrevTop" class="btn btn-default book-nav-btn" title="이전 일자/페이지 (단축키: ←, PageUp)">◀ 이전 페이지</button>
+        <button type="button" id="btnBookPrevTop" class="btn btn-default book-nav-btn" title="이전 일자/페이지 (단축키: ←, PageUp)">◀ 이전</button>
         <select id="bookDateSelect" class="form-input book-date-select" title="조회할 일자 선택"></select>
-        <button type="button" id="btnBookNextTop" class="btn btn-default book-nav-btn" title="다음 일자/페이지 (단축키: →, PageDown)">다음 페이지 ▶</button>
+        <button type="button" id="btnBookNextTop" class="btn btn-default book-nav-btn" title="다음 일자/페이지 (단축키: →, PageDown)">다음 ▶</button>
+
+        <!-- 단면(1페이지) / 양면(2페이지) 보기 전환 토글 -->
+        <button type="button" id="btnBookViewMode" class="btn btn-default book-tool-btn" title="단면(1페이지) / 양면(2페이지) 보기 전환">
+          📖 양면 보기
+        </button>
+
+        <!-- 줌 및 화면 맞춤 컨트롤 그룹 -->
+        <div class="book-zoom-group">
+          <button type="button" id="btnBookZoomOut" class="btn btn-default book-zoom-btn" title="축소">🔍−</button>
+          <button type="button" id="btnBookZoomFit" class="btn btn-default book-zoom-btn active" title="화면 너비/높이에 자동 맞춤">화면 맞춤</button>
+          <button type="button" id="btnBookZoomIn" class="btn btn-default book-zoom-btn" title="확대">🔍+</button>
+          <button type="button" id="btnBookZoomReset" class="btn btn-default book-zoom-btn" title="100% 원본 크기">100%</button>
+        </div>
       </div>
       <div class="book-toolbar-right">
+        <!-- 전체화면 토글 버튼 -->
+        <button type="button" id="btnBookFullscreen" class="btn btn-default book-tool-btn" title="전체화면 전환 (토글)">
+          ⛶ 전체화면
+        </button>
+        <button type="button" id="btnBookPrintAll" class="btn btn-info" style="font-size: 0.85rem; font-weight: 700;" title="전체 일자 운영기록부 일괄 인쇄 또는 PDF 저장">
+          🖨️ 전체 인쇄 / PDF
+        </button>
         <button type="button" id="btnBookPrintCurrent" class="btn btn-success" style="font-size: 0.85rem;" title="현재 보고 있는 일자 인쇄">🖨️ 현재 일자 인쇄</button>
         <button type="button" id="btnBookEditCurrent" class="btn btn-primary" style="font-size: 0.85rem;" title="이 일자를 메인 화면에서 수정">✏️ 편집하기</button>
         <button type="button" id="btnCloseBookViewer" class="btn btn-default book-close-btn" title="닫기 (ESC)">✖</button>
       </div>
     </div>
 
+    <!-- 썸네일 목차 슬라이드 서랍 패널 -->
+    <aside id="bookThumbnailDrawer" class="book-thumbnail-drawer hidden">
+      <div class="book-drawer-header">
+        <div class="book-drawer-title">
+          <span>📑</span>
+          <span>전체 일자 썸네일 목차</span>
+        </div>
+        <button type="button" id="btnCloseThumbnailDrawer" class="book-drawer-close-btn" title="목차 닫기">✖</button>
+      </div>
+      <div class="book-drawer-search">
+        <input type="text" id="inputThumbnailSearch" placeholder="날짜 또는 상태 검색..." class="form-input" style="font-size:0.82rem; padding:5px 10px; width:100%; border-radius:6px;" />
+      </div>
+      <div id="bookThumbnailList" class="book-thumbnail-list">
+        <!-- JS에서 동적 주입 -->
+      </div>
+    </aside>
+
+    <!-- 단면 모드 시 앞면/뒷면 전환 탭 바 (단면 모드일 때만 활성화) -->
+    <div id="singlePageToggleBar" class="single-page-toggle-bar" style="display: none;">
+      <button type="button" class="btn-single-sheet-tab active" data-sheet="front">📄 앞면 (운영기록 1)</button>
+      <button type="button" class="btn-single-sheet-tab" data-sheet="back">📄 뒷면 (운영기록 2)</button>
+    </div>
+
     <!-- 책 본체 스테이지 영역 -->
-    <div class="book-stage">
+    <div class="book-stage" id="bookStage">
       <!-- 좌측 플로팅 넘김 버튼 (이전 페이지) -->
       <button type="button" id="btnBookPrevSide" class="book-floating-arrow book-floating-prev" title="이전 페이지 (단축키: ←, PageUp)">❮</button>
 
