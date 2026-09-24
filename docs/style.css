@@ -287,7 +287,7 @@ body {
   justify-content: space-between;
   align-items: center;
   border: 1px solid var(--border-dark);
-  margin-bottom: 16px;
+  margin-bottom: 8px;
   background: #ffffff;
   font-weight: normal;
 }
@@ -355,9 +355,9 @@ body {
 }
 
 #frontSheet .section-title {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   font-weight: 800;
-  margin: 24px 0 10px 0;
+  margin: 8px 0 4px 0;
 }
 
 #frontSheet .sheet-table th, #frontSheet .sheet-table td {
@@ -390,7 +390,7 @@ body {
 
 #frontSheet .sub-note {
   font-size: 0.84rem;
-  margin-top: 8px;
+  margin-top: 3px;
 }
 
 #frontSheet .footer-standard {
@@ -1226,6 +1226,43 @@ body {
   border: 1px solid #cbd5e1 !important;
   border-radius: 2px !important;
   padding: 24mm 14mm 12mm 14mm !important;
+}
+
+/* 책뷰어 미리보기 제목줄 및 표 여백 최소화 */
+.book-page-wrapper .form-title-row {
+  margin-bottom: 6px !important;
+}
+
+.book-page-wrapper .info-box-table {
+  margin-bottom: 6px !important;
+}
+
+.book-page-wrapper .section-title {
+  margin: 6px 0 3px 0 !important;
+  font-size: 1rem !important;
+}
+
+.book-page-wrapper .sub-note {
+  margin-top: 2px !important;
+  margin-bottom: 4px !important;
+  font-size: 0.8rem !important;
+}
+
+.book-page-wrapper .sheet-table {
+  margin-top: 0 !important;
+  margin-bottom: 3px !important;
+}
+
+.book-page-wrapper .back-header {
+  margin-bottom: 2px !important;
+}
+
+.book-page-wrapper .law-guide {
+  margin-top: 10px !important;
+}
+
+.book-page-wrapper .footer-standard {
+  margin-top: 10px !important;
 }
 
 /* 하단 키보드 단축키 및 페이지 이동 바 */
